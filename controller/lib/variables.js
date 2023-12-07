@@ -31,8 +31,6 @@ const availableCommandsCrypto = [
     '/getprice',
     '/getpercentchange10mn',
     '/getpercentchange1h',
-    '/getallmessages',
-    '/graph10minutes',
     '/getrate',
     '/setrate',
 ];
@@ -47,6 +45,7 @@ const availableCommandsCurrency = [
 ];
 
 const availableCommandsInProgress = [
+    '/graph10minutes',
     '/graph1hour',
 ];
 
