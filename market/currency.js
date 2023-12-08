@@ -1,14 +1,13 @@
+require('dotenv').config();
 const axios = require('axios');
-
 // https://currency.getgeoapi.com/documentation/
 const API_URL = 'https://api.getgeoapi.com/v2/currency/convert';
-const API_KEY = 'f5b25ba55fa2f8bf1e660d2e3fb7318b435876a8';
 let FROM_CURRENCY = 'EUR';
 let TO_CURRENCY = 'USD';
 let AMOUT = 10;
 
 const params = {
-    api_key: API_KEY,
+    api_key: process.env.CURRENCY_API_KEY,
     from: FROM_CURRENCY,
     to: TO_CURRENCY,
     amount: AMOUT,
@@ -22,8 +21,8 @@ function exchangeInstance() {
                 const response = await axios.get(API_URL, { params });
                 return response.data;
             } catch (error) {
-                console.error(error);
-                return error;
+                console.error(error.message);
+                return error.message;
             }
         },
         async getExchangeRate() {
@@ -34,8 +33,8 @@ function exchangeInstance() {
                 params.amount = temp;
                 return exchangeRateFor1(response.data);
             } catch (error) {
-                console.error(error);
-                return error;
+                console.error(error.message);
+                return error.message;
             }
         },
         async convertToDollar(amount) {
@@ -46,8 +45,8 @@ function exchangeInstance() {
                 params.amount = temp;
                 return exchangeRateInUsd(response.data, amount);
             } catch (error) {
-                console.error(error);
-                return error;
+                console.error(error.message);
+                return error.message;
             }
         },
         async convertToEuro(amount) {
@@ -62,7 +61,7 @@ function exchangeInstance() {
                 params.to = 'USD';
                 return convertValueInEur(response.data);
             } catch (error) {
-                console.error(error);
+                console.error(error.message);
                 return error;
             }
         }

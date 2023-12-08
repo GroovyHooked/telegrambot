@@ -1,3 +1,4 @@
+require('dotenv').config();
 const axios = require('axios');
 // const { exchangeInstance } = require("./currency.js");
 
@@ -8,13 +9,12 @@ let current24hTrend = null;
 const btcLast10Prices = []
 const btcLastHourPrices = [];
 let alertThreshold = 0.2; // Percentage change to trigger an alert
-const API_KEY = '76bedc91-abd0-41da-9196-0e7a13b24eba';
 
 async function fetchDataFromApi() {
     try {
         const response = await axios.get('https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest', {
             headers: {
-                'X-CMC_PRO_API_KEY': API_KEY,
+                'X-CMC_PRO_API_KEY': process.env.COINMARKETCAP_API_KEY,
             },
         });
 

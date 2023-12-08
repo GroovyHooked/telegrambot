@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const sendMessagetoGpt = async (messages, model, temperature = 0, max_tokens = 500) => {
     //console.log({ messages, model, temperature, max_tokens })
     try {
@@ -5,7 +7,7 @@ const sendMessagetoGpt = async (messages, model, temperature = 0, max_tokens = 5
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer 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`,
+                Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
             },
             body: JSON.stringify({
                 model,

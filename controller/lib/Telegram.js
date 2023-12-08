@@ -1,3 +1,4 @@
+require('dotenv').config();
 const fs = require("fs");
 const path = require('path');
 
@@ -11,21 +12,23 @@ const variables = require("./variables.js");
 const TELEGRAM_USERNAME = 'groovyhooked';
 let MODEL = "gpt-3.5-turbo";
 let NB_OF_MESSAGES_TO_KEEP = 5;
-const CHAT_ID = 1622615205;
+
 const racineDuProjet = path.join(__dirname, '../../'); // Remonte d'un répertoire
 const imageUrl = path.join(racineDuProjet, 'charts', 'graph.png');
+console.log(imageUrl);
+console.log(fs.existsSync(imageUrl))
 
-crypto.init(sendToGroovy);
-crypto.main(sendToGroovy);
-setInterval(() => {
-    crypto.main(sendToGroovy)
-}, 60000);
+// crypto.init(sendToGroovy);
+// crypto.main(sendToGroovy);
+// setInterval(() => {
+//     crypto.main(sendToGroovy)
+// }, 60000);
 
 async function handleMessage(messageObj) {
 
-    if (messageObj && messageObj.chat.username !== TELEGRAM_USERNAME && messageObj.chat.id !== CHAT_ID) {
+    if (!isAuthorizedUser(messageObj)) {
         respondToUser(messageObj, `Vous n\'êtes pas autorisé à utiliser ce bot. Vous pouvez contacter un admin en lui remettant votre identifiant Telegram: ${messageObj.chat.id}.`);
-        return
+        return;
     }
 
     const content = messageObj?.text;
@@ -33,7 +36,6 @@ async function handleMessage(messageObj) {
     if (content) {
         const isCommand = await handleCommands(content, messageObj);
         // const isChange = await handleSpecialCommands(content, messageObj);
-
         if (!isCommand) {
             if (MODEL === "gpt-3.5-turbo") {
                 if (variables.messages.length >= NB_OF_MESSAGES_TO_KEEP + 15) {
@@ -81,37 +83,21 @@ function respondToUser(messageObj, messageText) {
 
 function sendToGroovy(messageText) {
     return axiosInstance.get("sendMessage", {
-        chat_id: CHAT_ID,
+        chat_id: process.env.CHAT_ID,
         text: messageText,
         parse_mode: "HTML",
     });
 }
 
-// async function handleSpecialCommands(content, messageObj) {
-//     if (content.startsWith('/change=')) {
-//         const amount = content.split('=')[1];
-//         const amountNumber = Number(amount);
-//         if (amountNumber) {
-//             const change = await exchangeInstance.getExchangeRateForAmount(amountNumber);
-//             respondToUser(messageObj, change);
-//             return true
-//         } else {
-//             respondToUser(messageObj, 'Veuillez entrer un nombre valide.');
-//             return true
-//         }
-//     }
-// }
-
 async function handleCommands(content, messageObj) {
     let messageString
-    let storedMessages
     switch (content) {
         // MENU / HELP
         case '/help':
             respondToUser(messageObj, `Voici les commandes disponibles: ${variables.availableCommands.map(command => `\n${command}`)}`);
             return true
         case '/menu':
-            axiosInstance.sendKeyboard('Choisissez une catégorie:', variables.menuOptions, CHAT_ID);
+            axiosInstance.sendKeyboard('Choisissez une catégorie:', variables.menuOptions, process.env.CHAT_ID);
             return true
         case '@Modèle':
             respondToUser(messageObj, `Voici les commandes disponibles pour le modèle: ${variables.availableCommandsGPT.map(command => `\n${command}`)}`);
@@ -131,7 +117,7 @@ async function handleCommands(content, messageObj) {
 
         // MODEL
         case '/setmodel':
-            axiosInstance.sendKeyboard('Choisissez un modèle :', variables.modelOptions, CHAT_ID);
+            axiosInstance.sendKeyboard('Choisissez un modèle :', variables.modelOptions, process.env.CHAT_ID);
             return true
         case 'Modèle: GPT-3':
             MODEL = "gpt-3.5-turbo";
@@ -145,37 +131,14 @@ async function handleCommands(content, messageObj) {
             respondToUser(messageObj, `Le modèle actuel est: ${MODEL}`);
             return true
         case '/clear':
-            if (MODEL === "gpt-3.5-turbo") {
-                variables.messages.splice(15)
-                respondToUser(messageObj, 'Messages effacés');
-                return true
-            } else if (MODEL === "gpt-4") {
-                variables.messagesGPT4.splice(0)
-                respondToUser(messageObj, 'Messages effacés');
-                return true
-            }
+            clearMessages()
+            return true
         case '/getlimit':
             respondToUser(messageObj, `La limite de mémoire est de ${NB_OF_MESSAGES_TO_KEEP} messages.`);
             return true
         case '/getmessages':
-            if (MODEL === "gpt-3.5-turbo") {
-                storedMessages = [...variables.messages]
-                storedMessages.splice(0, 15)
-                console.log(storedMessages);
-                if (storedMessages.length === 0) return respondToUser(messageObj, 'Aucun message en mémoire');
-                messageString = storedMessages.map(message => `<u><strong>\n${message.role}</strong></u>: ${message.content}`)
-                respondToUser(messageObj, `Voici les messages en mémoire:\n${messageString.join('')}`);
-                storedMessages = [];
-                return true
-            } else if (MODEL === "gpt-4") {
-                storedMessages = [...variables.messagesGPT4]
-                console.log(storedMessages);
-                if (storedMessages.length === 0) return respondToUser(messageObj, 'Aucun message en mémoire');
-                storedMessages = storedMessages.map(message => `<u><strong>\n${message.role}</strong></u>: ${message.content}`)
-                respondToUser(messageObj, `Voici les messages en mémoire:\n${messageString.join('')}`);
-                storedMessages = [];
-                return true
-            }
+            getStoredMessages(messageObj, messageString)
+            return true
         case '/getallmessages':
             if (MODEL === "gpt-3.5-turbo") {
                 messageString = variables.messages.map(message => `<strong>\n${message.role}</strong>: ${message.content}`)
@@ -187,7 +150,7 @@ async function handleCommands(content, messageObj) {
                 return true
             }
         case '/setlimit':
-            axiosInstance.sendKeyboard('Choisissez une limite :', variables.limitOptions, CHAT_ID);
+            axiosInstance.sendKeyboard('Choisissez une limite :', variables.limitOptions, process.env.CHAT_ID);
             return true
         case 'Limite: 5':
             if (NB_OF_MESSAGES_TO_KEEP === 5) return respondToUser(messageObj, 'La limite de mémoire est déjà de 5 messages.');
@@ -206,17 +169,12 @@ async function handleCommands(content, messageObj) {
             NB_OF_MESSAGES_TO_KEEP = 15;
             adjusteMemoryLimitAndRespond(MODEL, NB_OF_MESSAGES_TO_KEEP, variables.messages, variables.messagesGPT4, messageObj);
         case '/graph10minutes':
-            const outputPath1 = await createNumericCurveWithAxes(crypto.btcLast10Prices)
-            console.log(outputPath1);
-            const canvasData1 = fs.readFileSync(outputPath1);
-            console.log(canvasData1);
-            const foo = outputPath1.split('telegramBot')[1];
-            axiosInstance.sendPicture(imageUrl, CHAT_ID);
+            await createNumericCurveWithAxes(crypto.btcLast10Prices)
+            axiosInstance.sendPicture(imageUrl, process.env.CHAT_ID);
             return true
         case '/graph1hour':
-            const outputPath2 = await createNumericCurveWithAxes(crypto.btcLastHourPrices)
-            const canvasData2 = fs.readFileSync(outputPath2);
-            axiosInstance.sendPicture(imageUrl, CHAT_ID);
+            await createNumericCurveWithAxes(crypto.btcLastHourPrices)
+            axiosInstance.sendPicture(imageUrl, process.env.CHAT_ID);
             return true
 
         // CRYPTO
@@ -228,7 +186,7 @@ async function handleCommands(content, messageObj) {
             respondToUser(messageObj, `Le taux de suerveillance est: ${rate}`);
             return true
         case '/setrate':
-            axiosInstance.sendKeyboard('Choisissez un taux :', variables.rateOptions, CHAT_ID);
+            axiosInstance.sendKeyboard('Choisissez un taux :', variables.rateOptions, process.env.CHAT_ID);
             return true
         case 'Taux: 0.2%':
             if (crypto.getAlertThreshold() === 0.2) return respondToUser(messageObj, 'Le taux de surveillance est déjà de 0.2%.');
@@ -272,7 +230,7 @@ async function handleCommands(content, messageObj) {
 
 module.exports = { handleMessage };
 
-
+// Adjust memory limit
 function adjusteMemoryLimitAndRespond(MODEL, NB_OF_MESSAGES_TO_KEEP, messages, messagesGPT4, messageObj) {
     if (MODEL === "gpt-3.5-turbo") {
         messagesToKeep = NB_OF_MESSAGES_TO_KEEP + 15;
@@ -286,6 +244,53 @@ function adjusteMemoryLimitAndRespond(MODEL, NB_OF_MESSAGES_TO_KEEP, messages, m
     }
 }
 
+// Check if the user is authorized
+function isAuthorizedUser(messageObj) {
+    return messageObj && messageObj.chat.username === TELEGRAM_USERNAME && messageObj.chat.id === process.env.CHAT_ID;
+}
+
+// Clear stored messages
+function clearMessages() {
+    if (MODEL === "gpt-3.5-turbo") {
+        variables.messages.splice(15);
+    } else if (MODEL === "gpt-4") {
+        variables.messagesGPT4.splice(0);
+    }
+    respondToUser(messageObj, 'Les messages en mémoire ont été effacés.');
+}
+
+// Get stored messages
+function getStoredMessages(messageObj, messageString) {
+    let storedMessages;
+    if (MODEL === "gpt-3.5-turbo") {
+        storedMessages = [...variables.messages];
+        storedMessages.splice(0, 15);
+    } else if (MODEL === "gpt-4") {
+        storedMessages = [...variables.messagesGPT4];
+    }
+
+    if (storedMessages.length === 0) {
+        respondToUser(messageObj, 'Aucun message en mémoire');
+        return;
+    }
+
+    messageString = storedMessages.map(message => `<u><strong>\n${message.role}</strong></u>: ${message.content}`);
+    respondToUser(messageObj, `Voici les messages en mémoire:\n${messageString.join('')}`);
+}
 
 
 
+// async function handleSpecialCommands(content, messageObj) {
+//     if (content.startsWith('/change=')) {
+//         const amount = content.split('=')[1];
+//         const amountNumber = Number(amount);
+//         if (amountNumber) {
+//             const change = await exchangeInstance.getExchangeRateForAmount(amountNumber);
+//             respondToUser(messageObj, change);
+//             return true
+//         } else {
+//             respondToUser(messageObj, 'Veuillez entrer un nombre valide.');
+//             return true
+//         }
+//     }
+// }

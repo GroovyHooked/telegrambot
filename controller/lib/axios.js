@@ -1,7 +1,9 @@
+require('dotenv').config();
 const axios = require("axios");
-const MY_TOKEN = '6808743908:AAFZyoPAYpJOrx-XLW1-Bu6o04IF3Qk-Ft8'
+const FormData = require('form-data');
+const fs = require("fs");
 
-const BASE_URL = `https://api.telegram.org/bot${MY_TOKEN}`
+const BASE_URL = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_API_KEY}`
 
 function getAxiosInstance() {
     return {
@@ -29,18 +31,45 @@ function getAxiosInstance() {
                     one_time_keyboard: true,
                 }),
             }
-            const response = await axios.post(`https://api.telegram.org/bot${MY_TOKEN}/sendMessage`, innerOptions);
-            console.log(response.data);
+            try {
+                const response = await axios.post(`${BASE_URL}/sendMessage`, innerOptions);
+                console.log(response.data);
+            } catch (error) {
+                this.get("sendMessage", {
+                    chat_id: CHAT_ID,
+                    text: `Erreur lors de l'envoi du clavier. Statut: ${error.response.status}. Message: ${error.response.data}`,
+                    parse_mode: "HTML",
+        
+                })
+                console.error('Erreur lors de l\'envoi du clavier. Statut:', error.response.status, 'Message:', error.response.data);
+            }
         },
         async sendPicture(imageUrl, CHAT_ID) {
-            const innerOptions = {
-                method: "sendPhoto",
-                chat_id: CHAT_ID,
-                photo: imageUrl,
+            console.log(imageUrl, CHAT_ID);
+            if (fs.existsSync(imageUrl)) {
+                const formData = new FormData();
+                formData.append('chat_id', CHAT_ID);
+                formData.append('photo', fs.createReadStream(imageUrl));
+
+                try {
+                    const response = await axios.post(`${BASE_URL}/sendPhoto`, formData, {
+                        headers: {
+                            ...formData.getHeaders(),
+                        },
+                        //timeout: 10000, // Augmente le délai d'attente à 10 secondes (en millisecondes)
+                    });
+                    console.log(response.data);
+                } catch (error) {
+                    this.get("sendMessage", {
+                        chat_id: CHAT_ID,
+                        text: `Erreur lors de l'envoi de la photo. Statut: ${error.response.status}. Message: ${error.response.data}`,
+                        parse_mode: "HTML",
+            
+                    })
+                    console.error('Erreur lors de l\'envoi de la photo. Statut:', error.response.status, 'Message:', error.response.data);
+                }
             }
-            const response = await axios.post(`https://api.telegram.org/bot${MY_TOKEN}/sendPhoto`, innerOptions);
-            console.log(response.data);
-        },
+        }
     }
 }
 
