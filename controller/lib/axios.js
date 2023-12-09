@@ -4,6 +4,8 @@ const FormData = require('form-data');
 const fs = require("fs");
 
 const BASE_URL = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_API_KEY}`
+const COINBASE_URL = "https://api.coingecko.com/api/v3/coins/bitcoin"
+const COINMARKETCAP_URL = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest'
 
 function getAxiosInstance() {
     return {
@@ -35,12 +37,8 @@ function getAxiosInstance() {
                 const response = await axios.post(`${BASE_URL}/sendMessage`, innerOptions);
                 console.log(response.data);
             } catch (error) {
-                this.get("sendMessage", {
-                    chat_id: CHAT_ID,
-                    text: `Erreur lors de l'envoi du clavier. Statut: ${error.response.status}. Message: ${error.response.data}`,
-                    parse_mode: "HTML",
-        
-                })
+                const errorMessage = `Erreur lors de l'envoi du clavier. Statut: ${error.response.status}. Message: ${error.response.data}`;
+                this.sendToGroovy(errorMessage)
                 console.error('Erreur lors de l\'envoi du clavier. Statut:', error.response.status, 'Message:', error.response.data);
             }
         },
@@ -60,16 +58,51 @@ function getAxiosInstance() {
                     });
                     console.log(response.data);
                 } catch (error) {
-                    this.get("sendMessage", {
-                        chat_id: CHAT_ID,
-                        text: `Erreur lors de l'envoi de la photo. Statut: ${error.response.status}. Message: ${error.response.data}`,
-                        parse_mode: "HTML",
-            
-                    })
+                    const errorMessage = `Erreur lors de l'envoi de la photo. Statut: ${error.response.status}. Message: ${error.response.data}`;
+                    this.sendToGroovy(errorMessage);
                     console.error('Erreur lors de l\'envoi de la photo. Statut:', error.response.status, 'Message:', error.response.data);
                 }
             }
+        },
+        async fetchCoinbaseData() {
+            const usdBtcPrices = []
+            const { data } = await axios.get(COINBASE_URL)
+            data['tickers'].forEach((ticker) => {
+                if (ticker.base == "BTC" && ticker.target === "USD") {
+                    usdBtcPrices.push(ticker.last);
+                }
+            })
+            const usdBtcPrice = usdBtcPrices.reduce((acc, curr) => acc + curr, 0) / usdBtcPrices.length;
+            return {
+                quote: {
+                    USD: {
+                        price: usdBtcPrice
+                    }
+                }
+            }
+        },
+        async fetchDataFromCoinmarketcapApi() {
+            try {
+                const response = await axios.get(COINMARKETCAP_URL, {
+                    headers: {
+                        'X-CMC_PRO_API_KEY': process.env.COINMARKETCAP_API_KEY,
+                    },
+                });
+        
+                return response.data.data.find(item => item.name.toLowerCase() === 'bitcoin');
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        },
+        sendToGroovy(messageText) {
+            return this.get("sendMessage", {
+                chat_id: process.env.CHAT_ID,
+                text: messageText,
+                parse_mode: "HTML",
+            });
         }
+        
     }
 }
 

@@ -17,16 +17,16 @@ const imageUrl = path.join(racineDuProjet, 'charts', 'graph.png');
 console.log(imageUrl);
 console.log(fs.existsSync(imageUrl))
 
-// crypto.initCoinmarketcapApi(sendToGroovy);
-// crypto.mainCoinmarketcapApi(sendToGroovy);
+// crypto.initCoinmarketcapApi(axiosInstance.sendToGroovy);
+// crypto.mainCoinmarketcapApi(axiosInstance.sendToGroovy);
 // setInterval(() => {
-//     crypto.mainCoinmarketcapApi(sendToGroovy)
+//     crypto.mainCoinmarketcapApi(axiosInstance.sendToGroovy)
 // }, 60000);
 
-crypto.initCoinbaseApi(sendToGroovy);
-crypto.mainCoibaseApi(sendToGroovy);
+crypto.initCoinbaseApi(axiosInstance.sendToGroovy);
+crypto.mainCoinbaseApi(axiosInstance.sendToGroovy);
 setInterval(() => {
-    crypto.mainCoibaseApi(sendToGroovy)
+    crypto.mainCoinbaseApi(axiosInstance.sendToGroovy)
 }, 120000);
 
 async function handleMessage(messageObj) {
@@ -87,13 +87,6 @@ function respondToUser(messageObj, messageText) {
     });
 }
 
-function sendToGroovy(messageText) {
-    return axiosInstance.get("sendMessage", {
-        chat_id: process.env.CHAT_ID,
-        text: messageText,
-        parse_mode: "HTML",
-    });
-}
 
 async function handleCommands(content, messageObj) {
     let messageString
@@ -185,7 +178,7 @@ async function handleCommands(content, messageObj) {
 
         // CRYPTO
         case '/getprice':
-            crypto.retreiveBitcoinPrice(sendToGroovy);
+            crypto.retreiveBitcoinPrice(axiosInstance.sendToGroovy);
             return true
         case '/getrate':
             const rate = crypto.getAlertThreshold();
@@ -216,11 +209,11 @@ async function handleCommands(content, messageObj) {
             return true
         case '/getpercentchange10mn':
             const { percentChange, minutes } = crypto.getPercentChange10mn();
-            respondToUser(messageObj, `Le taux de variation sur ${minutes} minutes est de ${percentChange}%.`);
+            respondToUser(messageObj, `Le taux de variation sur ${minutes * 2} minutes est de ${percentChange}%.`);
             return true
         case '/getpercentchange1h':
             const { percentChange1h, time } = crypto.getPercentChange1h();
-            respondToUser(messageObj, `Le taux de variation sur ${time < 60 ? time : 1} ${time < 60 ? 'minutes' : 'heure'} est de ${percentChange1h}%.`);
+            respondToUser(messageObj, `Le taux de variation sur ${time * 2 < 60 ? time * 2 : 1} ${time * 2 < 60 ? 'minutes' : 'heure'} est de ${percentChange1h}%.`);
             return true
 
         // CURRENCY

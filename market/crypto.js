@@ -1,5 +1,6 @@
 require('dotenv').config();
-const axios = require('axios');
+// const axios = require('axios');
+const { axiosInstance } = require("../controller/lib/axios.js");
 // const { exchangeInstance } = require("./currency.js");
 
 let lastPrice = null;
@@ -10,42 +11,6 @@ const btcLast10Prices = []
 const btcLastHourPrices = [];
 let alertThreshold = 0.2; // Percentage change to trigger an alert
 
-
-
-async function fetchCoinbaseData() {
-    const usdBtcPrices = []
-    const endpoint = "https://api.coingecko.com/api/v3/coins/bitcoin";
-    const { data } = await axios.get(endpoint)
-    data['tickers'].forEach((ticker) => {
-        if (ticker.base == "BTC" && ticker.target === "USD") {
-            usdBtcPrices.push(ticker.last);
-        }
-    })
-    const usdBtcPrice = usdBtcPrices.reduce((acc, curr) => acc + curr, 0) / usdBtcPrices.length;
-    return {
-        quote: {
-            USD: {
-                price: usdBtcPrice
-            }
-        }
-    }
-}
-
-
-async function fetchDataFromCoinmarketcapApi() {
-    try {
-        const response = await axios.get('https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest', {
-            headers: {
-                'X-CMC_PRO_API_KEY': process.env.COINMARKETCAP_API_KEY,
-            },
-        });
-
-        return response.data.data.find(item => item.name.toLowerCase() === 'bitcoin');
-    } catch (error) {
-        console.error(error);
-        return null;
-    }
-}
 
 function analyzeBitcoinData(data, sendMessageCallback) {
     if (!data.quote.USD.percent_change_24h) return
@@ -184,8 +149,8 @@ async function retreiveBitcoinPrice(sendMessageCallback) {
     sendMessageCallback(message);
 }
 
-async function mainCoibaseApi(sendMessageCallback) {
-    const bitcoinData = await fetchCoinbaseData();
+async function mainCoinbaseApi(sendMessageCallback) {
+    const bitcoinData = await axiosInstance.fetchCoinbaseData();
     if (bitcoinData) {
         await analyzeBitcoinPrice(bitcoinData, sendMessageCallback);
         detectChartPatterns(bitcoinData, sendMessageCallback);
@@ -194,14 +159,14 @@ async function mainCoibaseApi(sendMessageCallback) {
 }
 
 async function initCoinbaseApi(sendMessageCallback) {
-    const bitcoinData = await fetchCoinbaseData();
+    const bitcoinData = await axiosInstance.fetchCoinbaseData();
     if (bitcoinData) {
         analyzeBitcoinData(bitcoinData, sendMessageCallback);
     }
 }
 
 async function mainCoinmarketcapApi(sendMessageCallback) {
-    const bitcoinData = await fetchDataFromCoinmarketcapApi();
+    const bitcoinData = await axiosInstance.fetchDataFromCoinmarketcapApi();
     if (bitcoinData) {
         await analyzeBitcoinPrice(bitcoinData, sendMessageCallback);
         detectChartPatterns(bitcoinData, sendMessageCallback);
@@ -210,7 +175,7 @@ async function mainCoinmarketcapApi(sendMessageCallback) {
 }
 
 async function initCoinmarketcapApi(sendMessageCallback) {
-    const bitcoinData = await fetchDataFromCoinmarketcapApi();
+    const bitcoinData = await axiosInstance.fetchDataFromCoinmarketcapApi();
     if (bitcoinData) {
         analyzeBitcoinData(bitcoinData, sendMessageCallback);
     }
@@ -251,6 +216,6 @@ module.exports = {
     getPercentChange1h,
     btcLastHourPrices,
     btcLast10Prices,
-    mainCoibaseApi,
+    mainCoinbaseApi,
     initCoinbaseApi,
 };
