@@ -137,7 +137,7 @@ async function handleCommands(content, messageObj) {
             respondToUser(messageObj, `Le modèle actuel est: ${MODEL}`);
             return true
         case '/clear':
-            clearMessages()
+            clearMessages(messageObj)
             return true
         case '/getlimit':
             respondToUser(messageObj, `La limite de mémoire est de ${NB_OF_MESSAGES_TO_KEEP} messages.`);
@@ -256,7 +256,7 @@ function isAuthorizedUser(messageObj) {
 }
 
 // Clear stored messages
-function clearMessages() {
+function clearMessages(messageObj) {
     if (MODEL === "gpt-3.5-turbo") {
         variables.messages.splice(15);
     } else if (MODEL === "gpt-4") {
