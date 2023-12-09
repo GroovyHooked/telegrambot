@@ -9,7 +9,6 @@ const crypto = require("../../market/crypto.js");
 const variables = require("./variables.js");
 // const { exchangeInstance } = require("../../market/currency.js");
 
-const TELEGRAM_USERNAME = 'groovyhooked';
 let MODEL = "gpt-3.5-turbo";
 let NB_OF_MESSAGES_TO_KEEP = 5;
 
@@ -18,11 +17,18 @@ const imageUrl = path.join(racineDuProjet, 'charts', 'graph.png');
 console.log(imageUrl);
 console.log(fs.existsSync(imageUrl))
 
-// crypto.init(sendToGroovy);
-// crypto.main(sendToGroovy);
+// crypto.initCoinmarketcapApi(sendToGroovy);
+// crypto.mainCoinmarketcapApi(sendToGroovy);
 // setInterval(() => {
-//     crypto.main(sendToGroovy)
+//     crypto.mainCoinmarketcapApi(sendToGroovy)
 // }, 60000);
+
+
+crypto.initCoinbaseApi(sendToGroovy);
+crypto.mainCoibaseApi(sendToGroovy);
+setInterval(() => {
+    crypto.mainCoibaseApi(sendToGroovy)
+}, 120000);
 
 async function handleMessage(messageObj) {
 
@@ -246,7 +252,10 @@ function adjusteMemoryLimitAndRespond(MODEL, NB_OF_MESSAGES_TO_KEEP, messages, m
 
 // Check if the user is authorized
 function isAuthorizedUser(messageObj) {
-    return messageObj && messageObj.chat.username === TELEGRAM_USERNAME && messageObj.chat.id === process.env.CHAT_ID;
+    console.log(messageObj.chat.username, process.env.TELEGRAM_USERNAME, messageObj.chat.id, process.env.CHAT_ID);
+    console.log(messageObj.chat.username === process.env.TELEGRAM_USERNAME)
+    console.log( messageObj.chat.id === process.env.CHAT_ID)
+    return messageObj && messageObj.chat.username === process.env.TELEGRAM_USERNAME && messageObj.chat.id === Number(process.env.CHAT_ID);
 }
 
 // Clear stored messages
