@@ -7,7 +7,7 @@ const { sendMessagetoGpt } = require("../../chatGPT/communication.js");
 const { createNumericCurveWithAxes } = require("../../charts/index.js");
 const crypto = require("../../market/crypto.js");
 const variables = require("./variables.js");
-// const { exchangeInstance } = require("../../market/currency.js");
+const { exchangeInstance } = require("../../market/currency.js");
 
 let MODEL = "gpt-3.5-turbo";
 let NB_OF_MESSAGES_TO_KEEP = 5;
@@ -22,7 +22,6 @@ console.log(fs.existsSync(imageUrl))
 // setInterval(() => {
 //     crypto.mainCoinmarketcapApi(sendToGroovy)
 // }, 60000);
-
 
 crypto.initCoinbaseApi(sendToGroovy);
 crypto.mainCoibaseApi(sendToGroovy);
@@ -41,8 +40,9 @@ async function handleMessage(messageObj) {
 
     if (content) {
         const isCommand = await handleCommands(content, messageObj);
-        // const isChange = await handleSpecialCommands(content, messageObj);
-        if (!isCommand) {
+        const isSpecialCommand = await handleSpecialCommands(content, messageObj);
+
+        if (!isCommand && !isSpecialCommand) {
             if (MODEL === "gpt-3.5-turbo") {
                 if (variables.messages.length >= NB_OF_MESSAGES_TO_KEEP + 15) {
                     variables.messages.splice(15, 1);
@@ -224,10 +224,10 @@ async function handleCommands(content, messageObj) {
             return true
 
         // CURRENCY
-        // case '/getchange':
-        //     const message = await exchangeInstance.getExchangeRate();
-        //     respondToUser(messageObj, message);
-        //     return true
+        case '/getchange':
+            const message = await exchangeInstance.getExchangeRate();
+            respondToUser(messageObj, message);
+            return true
 
         default:
             return false
@@ -252,9 +252,6 @@ function adjusteMemoryLimitAndRespond(MODEL, NB_OF_MESSAGES_TO_KEEP, messages, m
 
 // Check if the user is authorized
 function isAuthorizedUser(messageObj) {
-    console.log(messageObj.chat.username, process.env.TELEGRAM_USERNAME, messageObj.chat.id, process.env.CHAT_ID);
-    console.log(messageObj.chat.username === process.env.TELEGRAM_USERNAME)
-    console.log( messageObj.chat.id === process.env.CHAT_ID)
     return messageObj && messageObj.chat.username === process.env.TELEGRAM_USERNAME && messageObj.chat.id === Number(process.env.CHAT_ID);
 }
 
@@ -287,19 +284,17 @@ function getStoredMessages(messageObj, messageString) {
     respondToUser(messageObj, `Voici les messages en mémoire:\n${messageString.join('')}`);
 }
 
-
-
-// async function handleSpecialCommands(content, messageObj) {
-//     if (content.startsWith('/change=')) {
-//         const amount = content.split('=')[1];
-//         const amountNumber = Number(amount);
-//         if (amountNumber) {
-//             const change = await exchangeInstance.getExchangeRateForAmount(amountNumber);
-//             respondToUser(messageObj, change);
-//             return true
-//         } else {
-//             respondToUser(messageObj, 'Veuillez entrer un nombre valide.');
-//             return true
-//         }
-//     }
-// }
+async function handleSpecialCommands(content, messageObj) {
+    if (content.startsWith('/change=')) {
+        const amount = content.split('=')[1];
+        const amountNumber = Number(amount);
+        if (amountNumber) {
+            const change = await exchangeInstance.getExchangeRateForAmount(amountNumber);
+            respondToUser(messageObj, change);
+            return true
+        } else {
+            respondToUser(messageObj, 'Veuillez entrer un nombre valide.');
+            return true
+        }
+    }
+}

@@ -179,7 +179,7 @@ function detectPriceGaps(data, sendMessageCallback) {
 async function retreiveBitcoinPrice(sendMessageCallback) {
     // const valueInEuro = await exchangeInstance.convertToEuro(btcLast10Prices[btcLast10Prices.length - 1].price);
     const priceString = btcLast10Prices.map(obj => `${obj.time}: ${obj.price.toFixed(2)}$`).join('\n');
-    sendMessageCallback(`Évolution des ${btcLast10Prices.length} dernière minutes:\n${priceString}`)
+    sendMessageCallback(`Évolution des ${btcLast10Prices.length * 2} dernière minutes:\n${priceString}`)
     const message = `Prix du Bitcoin: ${btcLast10Prices[btcLast10Prices.length - 1].price.toFixed(2)}$.`;
     sendMessageCallback(message);
 }

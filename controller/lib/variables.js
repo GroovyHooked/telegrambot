@@ -12,8 +12,8 @@ const availableCommands = [
     '/getpercentchange10mn',
     '/getpercentchange1h',
     '/getallmessages',
-    '/graph10minutes',
-    '/graph1hour',
+    'WIP/graph10minutes',
+    'WIP/graph1hour',
     '/menu',
 ];
 
