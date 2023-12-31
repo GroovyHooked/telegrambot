@@ -94,7 +94,7 @@ module.exports = {
     exchangeInstance: exchangeInstance(),
 }
 
-// Example response:
+// Example object response:
 // {
 //     base_currency_code: 'EUR',
 //     base_currency_name: 'Euro',

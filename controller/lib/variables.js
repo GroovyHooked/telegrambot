@@ -9,7 +9,7 @@ const availableCommands = [
     '/setlimit',
     '/getmessages',
     '/getprice',
-    '/getpercentchange10mn',
+    '/getpercentchange20mn',
     '/getpercentchange1h',
     '/getallmessages',
     'WIP/graph10minutes',
@@ -29,7 +29,7 @@ const availableCommandsGPT = [
 
 const availableCommandsCrypto = [
     '/getprice',
-    '/getpercentchange10mn',
+    '/getpercentchange20mn',
     '/getpercentchange1h',
     '/getrate',
     '/setrate',
@@ -65,7 +65,7 @@ const messages = [
     { role: "system", content: "Vous pouvez taper /clear pour effacer les messages en mémoire." },
     { role: "system", content: "Vous pouvez taper /getprice pour voir le prix du Bitcoin." },
     { role: "system", content: "Vous pouvez taper /getchange pour voir le taux de change." },
-    { role: "system", content: "Vous pouvez taper /getpercentchange10mn pour voir le taux de variation sur 10 minutes." },
+    { role: "system", content: "Vous pouvez taper /getpercentchange20mn pour voir le taux de variation sur 10 minutes." },
     { role: "system", content: "Vous pouvez taper /getpercentchange1h pour voir le taux de variation sur 1 heure." },
     { role: "system", content: "Vous pouvez taper /getrate pour voir le taux de surveillance." },
     { role: "system", content: "Vous pouvez taper /setrate pour changer le taux de surveillance." },

@@ -17,12 +17,6 @@ const imageUrl = path.join(racineDuProjet, 'charts', 'graph.png');
 console.log(imageUrl);
 console.log(fs.existsSync(imageUrl))
 
-// crypto.initCoinmarketcapApi(axiosInstance.sendToGroovy);
-// crypto.mainCoinmarketcapApi(axiosInstance.sendToGroovy);
-// setInterval(() => {
-//     crypto.mainCoinmarketcapApi(axiosInstance.sendToGroovy)
-// }, 60000);
-
 crypto.initCoinbaseApi(axiosInstance.sendToGroovy);
 crypto.mainCoinbaseApi(axiosInstance.sendToGroovy);
 setInterval(() => {
@@ -32,7 +26,7 @@ setInterval(() => {
 async function handleMessage(messageObj) {
 
     if (!isAuthorizedUser(messageObj)) {
-        respondToUser(messageObj, `Vous n\'êtes pas autorisé à utiliser ce bot. Vous pouvez contacter un admin en lui remettant votre identifiant Telegram: ${messageObj.chat.id}.`);
+        axiosInstance.respondToUser(messageObj, `Vous n\'êtes pas autorisé à utiliser ce bot. Vous pouvez contacter un admin en lui remettant votre identifiant Telegram: ${messageObj.chat.id}.`);
         return;
     }
 
@@ -53,7 +47,7 @@ async function handleMessage(messageObj) {
                 try {
                     const response = await sendMessagetoGpt(variables.messages, MODEL);
                     variables.messages.push({ role: "assistant", content: response })
-                    return respondToUser(messageObj, response);
+                    return axiosInstance.respondToUser(messageObj, response);
                 } catch (error) {
                     console.error(error);
                     return "An error occurred";
@@ -68,7 +62,7 @@ async function handleMessage(messageObj) {
                 try {
                     const response = await sendMessagetoGpt(variables.messagesGPT4, MODEL);
                     variables.messagesGPT4.push({ role: "assistant", content: response })
-                    return respondToUser(messageObj, response);
+                    return axiosInstance.respondToUser(messageObj, response);
                 } catch (error) {
                     console.error(error);
                     return "An error occurred";
@@ -79,39 +73,30 @@ async function handleMessage(messageObj) {
 }
 
 
-function respondToUser(messageObj, messageText) {
-    return axiosInstance.get("sendMessage", {
-        chat_id: messageObj.chat.id,
-        text: messageText,
-        parse_mode: "HTML",
-    });
-}
-
-
 async function handleCommands(content, messageObj) {
     let messageString
     switch (content) {
         // MENU / HELP
         case '/help':
-            respondToUser(messageObj, `Voici les commandes disponibles: ${variables.availableCommands.map(command => `\n${command}`)}`);
+            axiosInstance.respondToUser(messageObj, `Voici les commandes disponibles: ${variables.availableCommands.map(command => `\n${command}`)}`);
             return true
         case '/menu':
             axiosInstance.sendKeyboard('Choisissez une catégorie:', variables.menuOptions, process.env.CHAT_ID);
             return true
         case '@Modèle':
-            respondToUser(messageObj, `Voici les commandes disponibles pour le modèle: ${variables.availableCommandsGPT.map(command => `\n${command}`)}`);
+            axiosInstance.respondToUser(messageObj, `Voici les commandes disponibles pour le modèle: ${variables.availableCommandsGPT.map(command => `\n${command}`)}`);
             return true
         case '@Bitcoin':
-            respondToUser(messageObj, `Voici les commandes disponibles pour le Bitcoin: ${variables.availableCommandsCrypto.map(command => `\n${command}`)}`);
+            axiosInstance.respondToUser(messageObj, `Voici les commandes disponibles pour le Bitcoin: ${variables.availableCommandsCrypto.map(command => `\n${command}`)}`);
             return true
         case '@Currency':
-            respondToUser(messageObj, `Voici les commandes disponibles pour les devises: ${variables.availableCommandsCurrency.map(command => `\n${command}`)}`);
+            axiosInstance.respondToUser(messageObj, `Voici les commandes disponibles pour les devises: ${variables.availableCommandsCurrency.map(command => `\n${command}`)}`);
             return true
         case '@Various':
-            respondToUser(messageObj, `Voici les commandes disponibles restantes: ${variables.availableCommandsVarious.map(command => `\n${command}`)}`);
+            axiosInstance.respondToUser(messageObj, `Voici les commandes disponibles restantes: ${variables.availableCommandsVarious.map(command => `\n${command}`)}`);
             return true
         case '@In Progress':
-            respondToUser(messageObj, `Commandes non fonctionnelles: ${variables.availableCommandsInProgress.map(command => `\n${command}`)}`);
+            axiosInstance.respondToUser(messageObj, `Commandes non fonctionnelles: ${variables.availableCommandsInProgress.map(command => `\n${command}`)}`);
             return true
 
         // MODEL
@@ -120,20 +105,20 @@ async function handleCommands(content, messageObj) {
             return true
         case 'Modèle: GPT-3':
             MODEL = "gpt-3.5-turbo";
-            respondToUser(messageObj, 'Vous avez choisi GPT-3. Le modèle est mis à jour.');
+            axiosInstance.respondToUser(messageObj, 'Vous avez choisi GPT-3. Le modèle est mis à jour.');
             return true
         case 'Modèle: GPT-4':
             MODEL = "gpt-4";
-            respondToUser(messageObj, 'Vous avez choisi GPT-4. Le modèle est mis à jour.');
+            axiosInstance.respondToUser(messageObj, 'Vous avez choisi GPT-4. Le modèle est mis à jour.');
             return true
         case '/getmodel':
-            respondToUser(messageObj, `Le modèle actuel est: ${MODEL}`);
+            axiosInstance.respondToUser(messageObj, `Le modèle actuel est: ${MODEL}`);
             return true
         case '/clear':
             clearMessages(messageObj)
             return true
         case '/getlimit':
-            respondToUser(messageObj, `La limite de mémoire est de ${NB_OF_MESSAGES_TO_KEEP} messages.`);
+            axiosInstance.respondToUser(messageObj, `La limite de mémoire est de ${NB_OF_MESSAGES_TO_KEEP} messages.`);
             return true
         case '/getmessages':
             getStoredMessages(messageObj, messageString)
@@ -141,30 +126,30 @@ async function handleCommands(content, messageObj) {
         case '/getallmessages':
             if (MODEL === "gpt-3.5-turbo") {
                 messageString = variables.messages.map(message => `<strong>\n${message.role}</strong>: ${message.content}`)
-                respondToUser(messageObj, `Voici toutes les données en mémoire:\n${messageString.join('\n')}`);
+                axiosInstance.respondToUser(messageObj, `Voici toutes les données en mémoire:\n${messageString.join('\n')}`);
                 return true
             } else if (MODEL === "gpt-4") {
                 messageString = variables.messagesGPT4.map(message => `<strong>\n${message.role}</strong>: ${message.content}`)
-                respondToUser(messageObj, `Voici toutes les données en mémoire:\n${messageString.join('\n')}`);
+                axiosInstance.respondToUser(messageObj, `Voici toutes les données en mémoire:\n${messageString.join('\n')}`);
                 return true
             }
         case '/setlimit':
             axiosInstance.sendKeyboard('Choisissez une limite :', variables.limitOptions, process.env.CHAT_ID);
             return true
         case 'Limite: 5':
-            if (NB_OF_MESSAGES_TO_KEEP === 5) return respondToUser(messageObj, 'La limite de mémoire est déjà de 5 messages.');
+            if (NB_OF_MESSAGES_TO_KEEP === 5) return axiosInstance.respondToUser(messageObj, 'La limite de mémoire est déjà de 5 messages.');
             NB_OF_MESSAGES_TO_KEEP = 5;
             adjusteMemoryLimitAndRespond(MODEL, NB_OF_MESSAGES_TO_KEEP, variables.messages, variables.messagesGPT4, messageObj);
         case 'Limite: 10':
-            if (NB_OF_MESSAGES_TO_KEEP === 10) return respondToUser(messageObj, 'La limite de mémoire est déjà de 10 messages.');
+            if (NB_OF_MESSAGES_TO_KEEP === 10) return axiosInstance.respondToUser(messageObj, 'La limite de mémoire est déjà de 10 messages.');
             NB_OF_MESSAGES_TO_KEEP = 10;
             adjusteMemoryLimitAndRespond(MODEL, NB_OF_MESSAGES_TO_KEEP, variables.messages, variables.messagesGPT4, messageObj)
         case 'Limite: 3':
-            if (NB_OF_MESSAGES_TO_KEEP === 3) return respondToUser(messageObj, 'La limite de mémoire est déjà de 3 messages.');
+            if (NB_OF_MESSAGES_TO_KEEP === 3) return axiosInstance.respondToUser(messageObj, 'La limite de mémoire est déjà de 3 messages.');
             NB_OF_MESSAGES_TO_KEEP = 3;
             adjusteMemoryLimitAndRespond(MODEL, NB_OF_MESSAGES_TO_KEEP, variables.messages, variables.messagesGPT4, messageObj)
         case 'Limite: 15':
-            if (NB_OF_MESSAGES_TO_KEEP === 15) return respondToUser(messageObj, 'La limite de mémoire est déjà de 15 messages.');
+            if (NB_OF_MESSAGES_TO_KEEP === 15) return axiosInstance.respondToUser(messageObj, 'La limite de mémoire est déjà de 15 messages.');
             NB_OF_MESSAGES_TO_KEEP = 15;
             adjusteMemoryLimitAndRespond(MODEL, NB_OF_MESSAGES_TO_KEEP, variables.messages, variables.messagesGPT4, messageObj);
         case '/graph10minutes':
@@ -182,44 +167,44 @@ async function handleCommands(content, messageObj) {
             return true
         case '/getrate':
             const rate = crypto.getAlertThreshold();
-            respondToUser(messageObj, `Le taux de suerveillance est: ${rate}`);
+            axiosInstance.respondToUser(messageObj, `Le taux de suerveillance est: ${rate}`);
             return true
         case '/setrate':
             axiosInstance.sendKeyboard('Choisissez un taux :', variables.rateOptions, process.env.CHAT_ID);
             return true
         case 'Taux: 0.2%':
-            if (crypto.getAlertThreshold() === 0.2) return respondToUser(messageObj, 'Le taux de surveillance est déjà de 0.2%.');
+            if (crypto.getAlertThreshold() === 0.2) return axiosInstance.respondToUser(messageObj, 'Le taux de surveillance est déjà de 0.2%.');
             crypto.setAlertThreshold(0.2)
-            respondToUser(messageObj, 'Vous avez choisi 0.2%. Le taux de surveillance est mis à jour.');
+            axiosInstance.respondToUser(messageObj, 'Vous avez choisi 0.2%. Le taux de surveillance est mis à jour.');
             return true
         case 'Taux: 0.5%':
-            if (crypto.getAlertThreshold() === 0.5) return respondToUser(messageObj, 'Le taux de surveillance est déjà de 0.5%.');
+            if (crypto.getAlertThreshold() === 0.5) return axiosInstance.respondToUser(messageObj, 'Le taux de surveillance est déjà de 0.5%.');
             crypto.setAlertThreshold(0.5)
-            respondToUser(messageObj, 'Vous avez choisi 0.5%. Le taux de surveillance est mis à jour.');
+            axiosInstance.respondToUser(messageObj, 'Vous avez choisi 0.5%. Le taux de surveillance est mis à jour.');
             return true
         case 'Taux: 0.01%':
-            if (crypto.getAlertThreshold() === 0.01) return respondToUser(messageObj, 'Le taux de surveillance est déjà de 0.01%.');
+            if (crypto.getAlertThreshold() === 0.01) return axiosInstance.respondToUser(messageObj, 'Le taux de surveillance est déjà de 0.01%.');
             crypto.setAlertThreshold(0.01)
-            respondToUser(messageObj, 'Vous avez choisi 0.01%. Le taux de surveillance est mis à jour.');
+            axiosInstance.respondToUser(messageObj, 'Vous avez choisi 0.01%. Le taux de surveillance est mis à jour.');
             return true
         case 'Taux: 1%':
-            if (crypto.getAlertThreshold() === 1) return respondToUser(messageObj, 'Le taux de surveillance est déjà de 1%.');
+            if (crypto.getAlertThreshold() === 1) return axiosInstance.respondToUser(messageObj, 'Le taux de surveillance est déjà de 1%.');
             crypto.setAlertThreshold(1)
-            respondToUser(messageObj, 'Vous avez choisi 1%. Le taux de surveillance est mis à jour.');
+            axiosInstance.respondToUser(messageObj, 'Vous avez choisi 1%. Le taux de surveillance est mis à jour.');
             return true
         case '/getpercentchange10mn':
             const { percentChange, minutes } = crypto.getPercentChange10mn();
-            respondToUser(messageObj, `Le taux de variation sur ${minutes * 2} minutes est de ${percentChange}%.`);
+            axiosInstance.respondToUser(messageObj, `Le taux de variation sur ${minutes * 2} minutes est de ${percentChange}%.`);
             return true
         case '/getpercentchange1h':
             const { percentChange1h, time } = crypto.getPercentChange1h();
-            respondToUser(messageObj, `Le taux de variation sur ${time * 2 < 60 ? time * 2 : 1} ${time * 2 < 60 ? 'minutes' : 'heure'} est de ${percentChange1h}%.`);
+            axiosInstance.respondToUser(messageObj, `Le taux de variation sur ${time * 2 < 60 ? time * 2 : 1} ${time * 2 < 60 ? 'minutes' : 'heure'} est de ${percentChange1h}%.`);
             return true
 
         // CURRENCY
         case '/getchange':
             const message = await exchangeInstance.getExchangeRate();
-            respondToUser(messageObj, message);
+            axiosInstance.respondToUser(messageObj, message);
             return true
 
         default:
@@ -234,11 +219,11 @@ function adjusteMemoryLimitAndRespond(MODEL, NB_OF_MESSAGES_TO_KEEP, messages, m
     if (MODEL === "gpt-3.5-turbo") {
         messagesToKeep = NB_OF_MESSAGES_TO_KEEP + 15;
         if (messages.length > messagesToKeep) messages.splice(messagesToKeep);
-        respondToUser(messageObj, `Vous avez choisi ${NB_OF_MESSAGES_TO_KEEP}. La limite de mémoire est mise à jour pour le modèle ${MODEL}.`);
+        axiosInstance.respondToUser(messageObj, `Vous avez choisi ${NB_OF_MESSAGES_TO_KEEP}. La limite de mémoire est mise à jour pour le modèle ${MODEL}.`);
         return true
     } else if (MODEL === "gpt-4") {
         if (messagesGPT4.length > NB_OF_MESSAGES_TO_KEEP) messagesGPT4.splice(NB_OF_MESSAGES_TO_KEEP);
-        respondToUser(messageObj, `Vous avez choisi ${NB_OF_MESSAGES_TO_KEEP}. La limite de mémoire est mise à jour pour le modèle ${MODEL}.`);
+        axiosInstance.respondToUser(messageObj, `Vous avez choisi ${NB_OF_MESSAGES_TO_KEEP}. La limite de mémoire est mise à jour pour le modèle ${MODEL}.`);
         return true
     }
 }
@@ -255,7 +240,7 @@ function clearMessages(messageObj) {
     } else if (MODEL === "gpt-4") {
         variables.messagesGPT4.splice(0);
     }
-    respondToUser(messageObj, 'Les messages en mémoire ont été effacés.');
+    axiosInstance.respondToUser(messageObj, 'Les messages en mémoire ont été effacés.');
 }
 
 // Get stored messages
@@ -269,12 +254,12 @@ function getStoredMessages(messageObj, messageString) {
     }
 
     if (storedMessages.length === 0) {
-        respondToUser(messageObj, 'Aucun message en mémoire');
+        axiosInstance.respondToUser(messageObj, 'Aucun message en mémoire');
         return;
     }
 
     messageString = storedMessages.map(message => `<u><strong>\n${message.role}</strong></u>: ${message.content}`);
-    respondToUser(messageObj, `Voici les messages en mémoire:\n${messageString.join('')}`);
+    axiosInstance.respondToUser(messageObj, `Voici les messages en mémoire:\n${messageString.join('')}`);
 }
 
 async function handleSpecialCommands(content, messageObj) {
@@ -283,10 +268,10 @@ async function handleSpecialCommands(content, messageObj) {
         const amountNumber = Number(amount);
         if (amountNumber) {
             const change = await exchangeInstance.getExchangeRateForAmount(amountNumber);
-            respondToUser(messageObj, change);
+            axiosInstance.respondToUser(messageObj, change);
             return true
         } else {
-            respondToUser(messageObj, 'Veuillez entrer un nombre valide.');
+            axiosInstance.respondToUser(messageObj, 'Veuillez entrer un nombre valide.');
             return true
         }
     }
