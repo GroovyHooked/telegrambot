@@ -1,479 +1,175 @@
 require('dotenv').config();
 const { axiosInstance } = require("../controller/lib/axios.js");
-// const { exchangeInstance } = require("./currency.js");
-
-let lastPrice = null;
-let lastVolume = null;
-let detectOverboughtOversoldMessage = null;
-let current24hTrend = null;
-const btcLast10Prices = []
-const btcLastHourPrices = [];
-const ethereumLast10Prices = [];
-const ethereumLastHourPrices = [];
-const adaLast10Prices = [];
-const adaLastHourPrices = [];
-const apeLast10Prices = [];
-const apeLastHourPrices = [];
-const solLast10Prices = [];
-const solLastHourPrices = [];
-const bonkLast10Prices = [];
-const bonkLastHourPrices = [];
-const graphLast10Prices = [];
-const graphLastHourPrices = [];
-const ipcLast10Prices = [];
-const ipcLastHourPrices = [];
-const vetLast10Prices = [];
-const vetLastHourPrices = [];
+const variables = require("../controller/lib/variables.js");
+const { insertCryptoData } = require("../database/database.js");
 
 let alertThreshold = 0.2; // Percentage change to trigger an alert
-const lowPriceAlert = 42500;
-const highPriceAlert = 45300;
+const cryptoArray = []
+
+fetchCryptoData().then(data => {
+    console.log({ data: data.data["NEAR Protocol"] });
+    populateCryptoDataAndHandleResult(cryptoArray, data, axiosInstance.sendToGroovy)
+})
+
+setInterval(() => {
+    fetchCryptoData().then(data => {
+        populateCryptoDataAndHandleResult(cryptoArray, data, axiosInstance.sendToGroovy)
+    })
+}, 60000);
 
 
-function analyzeBitcoinData(data, sendMessageCallback) {
-    if (!data.quote) return
-    const percentChange24h = data.quote.USD.percent_change_24h;
-    const trend24h = percentChange24h > 0 ? 'haussière' : percentChange24h < 0 ? 'baissière' : 'stable';
-
-    if (lastVolume !== null) {
-        const volumeChange = data.quote.USD.volume_24h - lastVolume;
-        if (volumeChange > 0) {
-            const message = `Augmentation du volume de transactions. Possibilité de mouvements de prix significatifs.`
-            sendMessageCallback(message)
+async function fetchCryptoData() {
+    try {
+        const data = await axiosInstance.fetchDataFromModulaApiMultiCoins()
+        if (!data) {
+            axiosInstance.sendToGroovy('Aucune donnée disponible pour le moment.')
+        } else {
+            return data
         }
+    } catch (err) {
+        axiosInstance.sendToGroovy(`Erreur: ${err}`)
+        throw err;
     }
-
-    lastVolume = data.quote.USD.volume_24h;
-    if (current24hTrend !== trend24h) {
-        const message = `Tendance sur 24h: ${trend24h}.`
-        sendMessageCallback(message)
-        current24hTrend = trend24h;
-    }
-
 }
 
-async function analyzeBitcoinPrice(data, sendMessageCallback) {
-    if(!data.quote) return
-    const btcPrice = data.quote.USD.price;
-    const { usdEthPrice, usdSolPrice, usdVetPrice, usdAdaPrice, usdIpcPrice, usdApePrice, usdBonkPrice, usdGraphPrice } = data.quote.USD.prices;
-    // if(btcPrice <= lowPriceAlert || btcPrice >= highPriceAlert){
-    //     const message = `Alert! Prix du Bitcoin: ${Number(btcPrice).toFixed(2)}$.`;
-    //     sendMessageCallback(message)
-    // }
-    const date = new Date();
-    const localTime = date.toLocaleTimeString();
-    const formattedLocalTime = localTime.slice(0, 5);
-    if (btcLast10Prices.length < 10) {
-        btcLast10Prices.push({
-            price: btcPrice,
-            time: formattedLocalTime
-        });
-        ethereumLast10Prices.push({
-            price: usdEthPrice,
-            time: formattedLocalTime
-        });
-        adaLast10Prices.push({
-            price: usdAdaPrice,
-            time: formattedLocalTime
-        });
-        apeLast10Prices.push({
-            price: usdApePrice,
-            time: formattedLocalTime
-        });
-        solLast10Prices.push({
-            price: usdSolPrice,
-            time: formattedLocalTime
-        });
-        bonkLast10Prices.push({
-            price: usdBonkPrice,
-            time: formattedLocalTime
-        });
-        graphLast10Prices.push({
-            price: usdGraphPrice,
-            time: formattedLocalTime
-        });
-        ipcLast10Prices.push({
-            price: usdIpcPrice,
-            time: formattedLocalTime
-        });
-        vetLast10Prices.push({
-            price: usdVetPrice,
-            time: formattedLocalTime
-        });
+function populateCryptoDataAndHandleResult(cryptoArray, cryptoObjet, sendMessageCallback) {
+    if (!cryptoObjet) return sendMessageCallback('Aucune donnée disponible dans l\'objet cryptoObjet')
+    if (cryptoObjet.length > 60 * 10) cryptoArray.shift()
+    console.log('DEBUG',cryptoObjet.data['bitcoin']);
+    insertCryptoData(cryptoObjet.data['bitcoin'], 'bitcoin')
+    insertCryptoData(cryptoObjet.data['ethereum'], 'ethereum')
+    insertCryptoData(cryptoObjet.data['cardano'], 'cardano')
+    insertCryptoData(cryptoObjet.data['vechain'], 'vechain')
+    insertCryptoData(cryptoObjet.data['The Graph'], 'The Graph')
+    insertCryptoData(cryptoObjet.data['Internet Computer'], 'Internet Computer')
+    insertCryptoData(cryptoObjet.data['solana'], 'solana')
+    insertCryptoData(cryptoObjet.data['apecoin'], 'apecoin')
+    insertCryptoData(cryptoObjet.data['NEAR Protocol'], 'NEAR Protocol')
 
-    } else {
-        btcLast10Prices.shift();
-        btcLast10Prices.push({
-            price: btcPrice,
-            time: formattedLocalTime
-        });
-        let lastBtcPrices = btcLast10Prices.slice(0, 10);
+    cryptoArray.push({
+        bitcoin: cryptoObjet.data['bitcoin'],
+        ethereum: cryptoObjet.data['ethereum'],
+        cardano: cryptoObjet.data['cardano'],
+        vechain: cryptoObjet.data['vechain'],
+        graph: cryptoObjet.data['The Graph'],
+        icp: cryptoObjet.data['Internet Computer'],
+        solana: cryptoObjet.data['solana'],
+        ape: cryptoObjet.data['apecoin'],
+        near: cryptoObjet.data['NEAR Protocol'],
+    })
+    //console.log({cryptoObjet: cryptoObjet.data.bitcoin});
+    console.log({ cryptoArray });
 
-        ethereumLast10Prices.shift();
-        ethereumLast10Prices.push({
-            price: usdEthPrice,
-            time: formattedLocalTime
-        });
-        let lastEthPrices = ethereumLast10Prices.slice(0, 10);
+    handleCryptoPrice(cryptoArray, sendMessageCallback)
+}
 
-        adaLast10Prices.shift();
-        adaLast10Prices.push({
-            price: usdAdaPrice,
-            time: formattedLocalTime
-        });
-        let lastAdaPrices = adaLast10Prices.slice(0, 10);
-
-        apeLast10Prices.shift();
-        apeLast10Prices.push({
-            price: usdApePrice,
-            time: formattedLocalTime
-        });
-        let lastApePrices = apeLast10Prices.slice(0, 10);
-
-        solLast10Prices.shift();
-        solLast10Prices.push({
-            price: usdSolPrice,
-            time: formattedLocalTime
-        });
-        let lastSolPrices = solLast10Prices.slice(0, 10);
-
-        bonkLast10Prices.shift();
-        bonkLast10Prices.push({
-            price: usdBonkPrice,
-            time: formattedLocalTime
-        });
-        let lastBonkPrices = bonkLast10Prices.slice(0, 10);
-
-        graphLast10Prices.shift();
-        graphLast10Prices.push({
-            price: usdGraphPrice,
-            time: formattedLocalTime
-        });
-        let lastGraphPrices = graphLast10Prices.slice(0, 10);
-
-        ipcLast10Prices.shift();
-        ipcLast10Prices.push({
-            price: usdIpcPrice,
-            time: formattedLocalTime
-        });
-        let lastIpcPrices = ipcLast10Prices.slice(0, 10);
-
-        vetLast10Prices.shift();
-        vetLast10Prices.push({
-            price: usdVetPrice,
-            time: formattedLocalTime
-        });
-        let lastVetPrices = vetLast10Prices.slice(0, 10);
-
-
-
-        lastBtcPrices = lastBtcPrices.map(item => item.price);
-        const highestBtcPrice = Math.max(...lastBtcPrices);
-        const lowestBtcPrice = Math.min(...lastBtcPrices);
-
-        lastEthPrices = lastEthPrices.map(item => item.price);
-        const highestEthPrice = Math.max(...lastEthPrices);
-        const lowestEthPrice = Math.min(...lastEthPrices);
-
-        lastAdaPrices = lastAdaPrices.map(item => item.price);
-        const highestAdaPrice = Math.max(...lastAdaPrices);
-        const lowestAdaPrice = Math.min(...lastAdaPrices);
-
-        lastApePrices = lastApePrices.map(item => item.price);
-        const highestApePrice = Math.max(...lastApePrices);
-        const lowestApePrice = Math.min(...lastApePrices);
-
-        lastSolPrices = lastSolPrices.map(item => item.price);
-        const highestSolPrice = Math.max(...lastSolPrices);
-        const lowestSolPrice = Math.min(...lastSolPrices);
-
-        lastBonkPrices = lastBonkPrices.map(item => item.price);
-        const highestBonkPrice = Math.max(...lastBonkPrices);
-        const lowestBonkPrice = Math.min(...lastBonkPrices);
-
-        lastGraphPrices = lastGraphPrices.map(item => item.price);
-        const highestGraphPrice = Math.max(...lastGraphPrices);
-        const lowestGraphPrice = Math.min(...lastGraphPrices);
-
-        lastIpcPrices = lastIpcPrices.map(item => item.price);
-        const highestIpcPrice = Math.max(...lastIpcPrices);
-        const lowestIpcPrice = Math.min(...lastIpcPrices);
-
-        lastVetPrices = lastVetPrices.map(item => item.price);
-        const highestVetPrice = Math.max(...lastVetPrices);
-        const lowestVetPrice = Math.min(...lastVetPrices);
-
-        const data = [
-            {
-                lastBtcPrices, highestBtcPrice, lowestBtcPrice
-            },
-            {
-                lastEthPrices, highestEthPrice, lowestEthPrice
-            },
-            {
-                lastAdaPrices, highestAdaPrice, lowestAdaPrice
-            },
-            {
-                lastApePrices, highestApePrice, lowestApePrice
-            },
-            {
-                lastSolPrices, highestSolPrice, lowestSolPrice
-            },
-            {
-                lastBonkPrices, highestBonkPrice, lowestBonkPrice
-            },
-            {
-                lastGraphPrices, highestGraphPrice, lowestGraphPrice
-            },
-            {
-                lastIpcPrices, highestIpcPrice, lowestIpcPrice
-            },
-            {
-                lastVetPrices, highestVetPrice, lowestVetPrice
-            },
-        ]
-
-
-
-        if (lastPrice !== null) {
-            data.forEach(item => {
-                analyzeCryptoData(item.lastBtcPrices, item.highestBtcPrice, item.lowestBtcPrice)
-            })
+function handleCryptoPrice(cryptoArray, sendMessageCallback) {
+    cryptoArray.forEach((element, index) => {
+        if (index === cryptoArray.length - 1) {
+            if (element.bitcoin) variables.pricesAndVariation.btc.prices.push(element.bitcoin.price)
+            if (element.ethereum) variables.pricesAndVariation.eth.prices.push(element.ethereum.price)
+            if (element.cardano) variables.pricesAndVariation.ada.prices.push(element.cardano.price)
+            if (element.vechain) variables.pricesAndVariation.vet.prices.push(element.vechain.price)
+            if (element.graph) variables.pricesAndVariation.graph.prices.push(element.graph.price)
+            if (element.icp) variables.pricesAndVariation.icp.prices.push(element.icp.price)
+            if (element.solana) variables.pricesAndVariation.sol.prices.push(element.solana.price)
+            if (element.ape) variables.pricesAndVariation.ape.prices.push(element.ape.price)
+            if (element.near) variables.pricesAndVariation.near.prices.push(element.near.price)
         }
-    }
-    if (btcLastHourPrices.length < 30) {
-        btcLastHourPrices.push({
-            price: btcPrice,
-            time: formattedLocalTime
-        });
-        ethereumLastHourPrices.push({
-            price: usdEthPrice,
-            time: formattedLocalTime
-        });
-        adaLastHourPrices.push({
-            price: usdAdaPrice,
-            time: formattedLocalTime
-        });
-        apeLastHourPrices.push({
-            price: usdApePrice,
-            time: formattedLocalTime
-        });
-        solLastHourPrices.push({
-            price: usdSolPrice,
-            time: formattedLocalTime
-        });
-        bonkLastHourPrices.push({
-            price: usdBonkPrice,
-            time: formattedLocalTime
-        });
-        graphLastHourPrices.push({
-            price: usdGraphPrice,
-            time: formattedLocalTime
-        });
-        ipcLastHourPrices.push({
-            price: usdIpcPrice,
-            time: formattedLocalTime
-        });
-        vetLastHourPrices.push({
-            price: usdVetPrice,
-            time: formattedLocalTime
-        });
+    })
 
-    } else {
-        btcLastHourPrices.shift();
-        btcLastHourPrices.push({
-            price: btcPrice,
-            time: formattedLocalTime
-        });
-        ethereumLastHourPrices.shift();
-        ethereumLastHourPrices.push({
-            price: usdEthPrice,
-            time: formattedLocalTime
-        });
-        adaLastHourPrices.shift();
-        adaLastHourPrices.push({
-            price: usdAdaPrice,
-            time: formattedLocalTime
-        });
-        apeLastHourPrices.shift();
-        apeLastHourPrices.push({
-            price: usdApePrice,
-            time: formattedLocalTime
-        });
-        solLastHourPrices.shift();
-        solLastHourPrices.push({
-            price: usdSolPrice,
-            time: formattedLocalTime
-        });
-        bonkLastHourPrices.shift();
-        bonkLastHourPrices.push({
-            price: usdBonkPrice,
-            time: formattedLocalTime
-        });
-        graphLastHourPrices.shift();
-        graphLastHourPrices.push({
-            price: usdGraphPrice,
-            time: formattedLocalTime
-        });
-        ipcLastHourPrices.shift();
-        ipcLastHourPrices.push({
-            price: usdIpcPrice,
-            time: formattedLocalTime
-        });
-        vetLastHourPrices.shift();
-        vetLastHourPrices.push({
-            price: usdVetPrice,
-            time: formattedLocalTime
-        });
-    }
+    variables.pricesAndVariation.btc.variation = computePercentageVariation(variables.pricesAndVariation.btc.prices).toFixed(2)
+    variables.pricesAndVariation.eth.variation = computePercentageVariation(variables.pricesAndVariation.eth.prices).toFixed(2)
+    variables.pricesAndVariation.ada.variation = computePercentageVariation(variables.pricesAndVariation.ada.prices).toFixed(2)
+    variables.pricesAndVariation.vet.variation = computePercentageVariation(variables.pricesAndVariation.vet.prices).toFixed(2)
+    variables.pricesAndVariation.graph.variation = computePercentageVariation(variables.pricesAndVariation.graph.prices).toFixed(2)
+    variables.pricesAndVariation.icp.variation = computePercentageVariation(variables.pricesAndVariation.icp.prices).toFixed(2)
+    variables.pricesAndVariation.sol.variation = computePercentageVariation(variables.pricesAndVariation.sol.prices).toFixed(2)
+    variables.pricesAndVariation.ape.variation = computePercentageVariation(variables.pricesAndVariation.ape.prices).toFixed(2)
+    variables.pricesAndVariation.near.variation = computePercentageVariation(variables.pricesAndVariation.near.prices).toFixed(2)
 
-    lastPrice = btcPrice;
-}
-
-function analyzeCryptoData(cryptoLast10Prices, highestCryptoPrice, lowestCryptoPrice) {
-
-    const cryptoPercentChange = computePercentageVariation(cryptoLast10Prices);
-
-    if (Math.abs(cryptoPercentChange) >= alertThreshold) {
-        const trend = Math.sign(cryptoPercentChange) === 1 ? 'Augmentaion' : 'Baisse';
-        const tempMessage = [
-            `<strong>${trend ? trend : 'N/A'} du prix du ${cryptoLast10Prices[0].crypto}.</strong>`,
-            `Au cours des 20 dernières minutes`,
-            `Valeur la plus haute: ${highestCryptoPrice.toFixed(2)}$.`,
-            `Valeur la plus basse: ${lowestCryptoPrice.toFixed(2)}$.`,
-            `Diff: ${(highestCryptoPrice - lowestCryptoPrice).toFixed(2)}$.`,
-            `Taux de variation: ${cryptoPercentChange.toFixed(2)}%.`,
-        ]
-
-        const message = tempMessage.map(item => item).join('\n');
-
-        sendMessageCallback(message)
-        detectOverboughtOversold(data, sendMessageCallback)
-        analyzeBitcoinData(data, sendMessageCallback)
-    }
-
-}
-
-
-function detectOverboughtOversold(data, sendMessageCallback) {
-    if (!data.quote.USD.percent_change_24h) return
-    const rsi = data.quote.USD.percent_change_24h;
-
-    if (rsi > 70) {
-        const increaseMessage = `Niveau de surachat détecté. Considère une possible correction à la baisse.`;
-        if (detectOverboughtOversoldMessage !== increaseMessage) {
-            sendMessageCallback(message)
-            detectOverboughtOversoldMessage = increaseMessage;
-        }
-    } else if (rsi < 30) {
-        const decreaseMessage = `Niveau de survente détecté. Considère une possible correction à la hausse.`;
-        if (detectOverboughtOversoldMessage !== decreaseMessage) {
-            sendMessageCallback(message)
-            detectOverboughtOversoldMessage = decreaseMessage;
-        }
+    for (const [key, value] of Object.entries(variables.pricesAndVariation)) {
+        // console.log({prices: value.prices});
+        // const valuesToCompute = value.prices.slice(value.prices.length - 5, value.prices.length);
+        // console.log({ valuesToCompute });
+        if(value.prices.length >= 5){
+            if (Math.abs(value.variation) >= alertThreshold) {
+                const valuesToCompute = value.prices.slice(value.prices.length - 5, value.prices.length);
+                console.log({ valuesToCompute });
+                const highestCryptoPrice = Math.max(...valuesToCompute);
+                const lowestCryptoPrice = Math.min(...valuesToCompute);
+                console.log({ highestCryptoPrice, lowestCryptoPrice });
+                const trend = Math.sign(value.variation) === 1 ? 'Augmentaion' : 'Baisse';
+                const tempMessage = [
+                    `<strong>${trend ? trend : 'N/A'} du prix du ${key}.</strong>`,
+                    `Au cours des 5 dernières minutes`,
+                    `Valeur la plus haute: ${highestCryptoPrice.toFixed(2)}$.`,
+                    `Valeur la plus basse: ${lowestCryptoPrice.toFixed(2)}$.`,
+                    `Diff: ${(highestCryptoPrice - lowestCryptoPrice).toFixed(2)}$.`,
+                    `Taux de variation: ${value.variation}%.`,
+                ]
+                const message = tempMessage.map(item => item).join('\n');
+                sendMessageCallback(message)
+            }
+        } 
     }
 }
 
-function detectChartPatterns(data, sendMessageCallback) {
-    if(!data.quote) return
-    if (!data.quote.USD.percent_change_24h || !data.quote.USD.btcLastHourPrices) return
-    const isHeadAndShoulders = data.quote.USD.btcLastHourPrices > 2 && data.quote.USD.percent_change_24h < -2;
-
-    if (isHeadAndShoulders) {
-        const message = `Possible motif de tête et épaules détecté. Considère une analyse approfondie. Prix du Bitcoin: ${Number(data.quote.USD.price).toFixed(2)}$`;
-        sendMessageCallback(message)
+function retreiveCryptoPrices(sendMessageCallback) {
+    console.log({ cryptoObject: variables.pricesAndVariation });
+    let message = '';
+    const ownedValues = []
+    if (variables.pricesAndVariation.btc.prices.length === 0) return sendMessageCallback('Aucune donnée disponible pour le moment.')
+    for (const [key, value] of Object.entries(variables.pricesAndVariation)) {
+        message += `${key}: ${value.prices[value.prices.length - 1].toFixed(2)}$ (${value.variation}%)\n`
+        const valueOwned = value.prices[value.prices.length - 1] * value.quantity;
+        ownedValues.push(valueOwned)
+        message += `Valeur possédée: ${valueOwned.toFixed(2)}$\n`
     }
-
-}
-
-function detectPriceGaps(data, sendMessageCallback) {
-    if(!data.quote) return
-    if (!data.quote.USD.open_24h) return
-    const previousClose = data.quote.USD.open_24h;
-    const currentPrice = data.quote.USD.price;
-    const priceGap = Math.abs(currentPrice - previousClose);
-
-    if (priceGap > 50) {
-        const message = `Possible gap de prix détecté. Étudie la raison de cette variation. Prix du Bitcoin: ${Number(data.quote.USD.price).toFixed(2)}$`;
-        sendMessageCallback(message)
-    }
-}
-
-async function retreiveBitcoinPrice(sendMessageCallback) {
-    // const valueInEuro = await exchangeInstance.convertToEuro(btcLast10Prices[btcLast10Prices.length - 1].price);
-    const priceString = btcLast10Prices.map(obj => `${obj.time}: ${obj.price.toFixed(2)}$`).join('\n');
-    sendMessageCallback(`Évolution des ${btcLast10Prices.length * 2} dernière minutes:\n${priceString}`)
-    const message = `Prix du Bitcoin: ${btcLast10Prices[btcLast10Prices.length - 1].price.toFixed(2)}$.`;
+    message += `Valeur totale: ${ownedValues.reduce((acc, curr) => acc + curr).toFixed(2)}$`
     sendMessageCallback(message)
 }
 
-async function mainCoinbaseApi(sendMessageCallback) {
-    const bitcoinData = await axiosInstance.fetchCoinbaseData();
-    if (bitcoinData) {
-        await analyzeBitcoinPrice(bitcoinData, sendMessageCallback);
-        detectChartPatterns(bitcoinData, sendMessageCallback);
-        detectPriceGaps(bitcoinData, sendMessageCallback);
+function computePercentageVariation(arrayOfPrices) {
+    const firstElement = arrayOfPrices[0];
+    const elementType = typeof firstElement;
+    if (elementType === 'object') {
+        console.log({ arrayOfPrices });
+        const diff = arrayOfPrices[arrayOfPrices.length - 1].price - arrayOfPrices[0].price;
+        const variation = diff / arrayOfPrices[0].price * 100;
+        return variation;
+    } else {
+        const diff = arrayOfPrices[arrayOfPrices.length - 1] - arrayOfPrices[0];
+        const variation = diff / arrayOfPrices[0] * 100;
+        return variation;
     }
 }
 
-async function initCoinbaseApi(sendMessageCallback) {
-    const bitcoinData = await axiosInstance.fetchCoinbaseData();
-    if (bitcoinData) {
-        analyzeBitcoinData(bitcoinData, sendMessageCallback);
+const getPercentChange5mn = (coin) => {
+    return {
+        percentChange: computePercentageVariation(variables.pricesAndVariation[coin].prices.slice(variables.pricesAndVariation[coin].prices.length - 5, variables.pricesAndVariation[coin].prices.length)).toFixed(2),
+        minutes: 5
     }
-}
+};
 
-async function mainCoinmarketcapApi(sendMessageCallback) {
-    const bitcoinData = await axiosInstance.fetchDataFromCoinmarketcapApi();
-    if (bitcoinData) {
-        await analyzeBitcoinPrice(bitcoinData, sendMessageCallback);
-        detectChartPatterns(bitcoinData, sendMessageCallback);
-        detectPriceGaps(bitcoinData, sendMessageCallback);
+const getPercentChangePerMinutes = (coin, minutes) => {
+    // retreive the last 60 values from btcLastHoursPrices 
+    const lastPrices = variables.pricesAndVariation[coin].prices.slice(variables.pricesAndVariation[coin].prices.length - minutes, variables.pricesAndVariation[coin].prices.length);
+    return {
+        percentChange1h: computePercentageVariation(lastPrices).toFixed(2),
+        time: lastPrices.length
     }
-}
-
-async function initCoinmarketcapApi(sendMessageCallback) {
-    const bitcoinData = await axiosInstance.fetchDataFromCoinmarketcapApi();
-    if (bitcoinData) {
-        analyzeBitcoinData(bitcoinData, sendMessageCallback);
-    }
-}
+};
 
 const getAlertThreshold = () => alertThreshold;
 const setAlertThreshold = (newThreshold) => {
     alertThreshold = newThreshold;
 }
 
-function computePercentageVariation(arrayOfPrices) {
-    const diff = arrayOfPrices[arrayOfPrices.length - 1].price - arrayOfPrices[0].price;
-    const variation = diff / arrayOfPrices[0].price * 100;
-    return variation;
-}
-
-const getPercentChange10mn = () => {
-    return {
-        percentChange: computePercentageVariation(btcLast10Prices).toFixed(2),
-        minutes: btcLast10Prices.length
-    }
-};
-
-const getPercentChange1h = () => {
-    return {
-        percentChange1h: computePercentageVariation(btcLastHourPrices).toFixed(2),
-        time: btcLastHourPrices.length
-    }
-};
-
 module.exports = {
-    mainCoinmarketcapApi,
-    initCoinmarketcapApi,
-    retreiveBitcoinPrice,
+    getPercentChange5mn,
+    getPercentChangePerMinutes,
     getAlertThreshold,
     setAlertThreshold,
-    getPercentChange10mn,
-    getPercentChange1h,
-    btcLastHourPrices,
-    btcLast10Prices,
-    mainCoinbaseApi,
-    initCoinbaseApi,
-};
+    retreiveCryptoPrices
+}

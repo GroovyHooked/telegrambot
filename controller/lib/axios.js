@@ -6,14 +6,7 @@ const fs = require("fs");
 const BASE_URL = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_API_KEY}`
 
 const BITCOIN_URL = "https://api.coingecko.com/api/v3/coins/bitcoin"
-const APECOIN_URL = "https://api.coingecko.com/api/v3/coins/apecoin"
-const BONK_URL = "https://api.coingecko.com/api/v3/coins/bonk-token"
-const ETHEREUM_URL = "https://api.coingecko.com/api/v3/coins/ethereum"
-const SOLANA_URL = "https://api.coingecko.com/api/v3/coins/solana"
-const VECHAIN_URL = "https://api.coingecko.com/api/v3/coins/vechain"
-const IPCOIN_URL = "https://api.coingecko.com/api/v3/coins/ipcoin"
-const ADA_URL = "https://api.coingecko.com/api/v3/coins/cardano"
-const THEGRAPH_URL = "https://api.coingecko.com/api/v3/coins/the-graph"
+
 const COINMARKETCAP_URL = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest'
 
 function getAxiosInstance() {
@@ -95,107 +88,18 @@ function getAxiosInstance() {
 
     const fetchCoinbaseData = async () => {
         const usdBtcPrices = []
-        const usdEthPrices = []
-        const usdSolPrices = []
-        const usdVetPrices = []
-        const usdAdaPrices = []
-        const usdIpcPrices = []
-        const usdApePrices = []
-        const usdBonkPrices = []
-        const usdGraphPrices = []
-        //const { bitcoinData } = await axios.get(BITCOIN_URL)
-        // const { ethData } = await axios.get(ETHEREUM_URL)
-        // const { solData } = await axios.get(SOLANA_URL)
-        // const { vetData } = await axios.get(VECHAIN_URL)
-        // const { adaData } = await axios.get(ADA_URL)
-        // const { ipcData } = await axios.get(IPCOIN_URL)
-        // const { apeData } = await axios.get(APECOIN_URL)
-        // const { bonkData } = await axios.get(BONK_URL)
-        // const { graphData } = await axios.get(THEGRAPH_URL)
-        // console.log(bitcoinData);
-        // bitcoinData['tickers'].forEach((ticker) => {
-        //     if (ticker.base == "BTC" && ticker.target === "USD") {
-        //         usdBtcPrices.push(ticker.last);
-        //     }
-        // })
-        // const usdBtcPrice = usdBtcPrices.reduce((acc, curr) => acc + curr, 0) / usdBtcPrices.length;
+        const { bitcoinData } = await axios.get(BITCOIN_URL)
+        bitcoinData['tickers'].forEach((ticker) => {
+            if (ticker.base == "BTC" && ticker.target === "USD") {
+                usdBtcPrices.push(ticker.last);
+            }
+        })
+        const usdBtcPrice = usdBtcPrices.reduce((acc, curr) => acc + curr, 0) / usdBtcPrices.length;
 
-        // ethData['tickers'].forEach((ticker) => {
-        //     if (ticker.base == "ETH" && ticker.target === "USD") {
-        //         usdEthPrices.push(ticker.last);
-        //     }
-        // }
-        // )
-        // const usdEthPrice = usdEthPrices.reduce((acc, curr) => acc + curr, 0) / usdEthPrices.length;
-
-        // solData['tickers'].forEach((ticker) => {
-        //     if (ticker.base == "SOL" && ticker.target === "USD") {
-        //         usdSolPrices.push(ticker.last);
-        //     }
-        // }
-        // )
-        // const usdSolPrice = usdSolPrices.reduce((acc, curr) => acc + curr, 0) / usdSolPrices.length;
-
-        // vetData['tickers'].forEach((ticker) => {
-        //     if (ticker.base == "VET" && ticker.target === "USD") {
-        //         usdVetPrices.push(ticker.last);
-        //     }
-        // }
-        // )
-
-        // const usdVetPrice = usdVetPrices.reduce((acc, curr) => acc + curr, 0) / usdVetPrices.length;
-
-        // adaData['tickers'].forEach((ticker) => {
-        //     if (ticker.base == "ADA" && ticker.target === "USD") {
-        //         usdAdaPrices.push(ticker.last);
-        //     }
-        // }
-        // )
-
-        // const usdAdaPrice = usdAdaPrices.reduce((acc, curr) => acc + curr, 0) / usdAdaPrices.length;
-
-        // ipcData['tickers'].forEach((ticker) => {
-        //     if (ticker.base == "IPC" && ticker.target === "USD") {
-        //         usdIpcPrices.push(ticker.last);
-        //     }
-        // }
-        // )
-
-        // const usdIpcPrice = usdIpcPrices.reduce((acc, curr) => acc + curr, 0) / usdIpcPrices.length;
-
-        // apeData['tickers'].forEach((ticker) => {
-        //     if (ticker.base == "APE" && ticker.target === "USD") {
-        //         usdApePrices.push(ticker.last);
-        //     }
-        // }
-        // )
-
-        // const usdApePrice = usdApePrices.reduce((acc, curr) => acc + curr, 0) / usdApePrices.length;
-
-        // bonkData['tickers'].forEach((ticker) => {
-        //     if (ticker.base == "BONK" && ticker.target === "USD") {
-        //         usdBonkPrices.push(ticker.last);
-        //     }
-        // }
-        // )
-
-        // const usdBonkPrice = usdBonkPrices.reduce((acc, curr) => acc + curr, 0) / usdBonkPrices.length;
-
-        // graphData['tickers'].forEach((ticker) => {
-        //     if (ticker.base == "GRT" && ticker.target === "USD") {
-        //         usdGraphPrices.push(ticker.last);
-        //     }
-        // }
-        // )
-
-        // const usdGraphPrice = usdGraphPrices.reduce((acc, curr) => acc + curr, 0) / usdGraphPrices.length;
-
-
-        return [] || {
+        return {
             quote: {
                 USD: {
                     price: usdBtcPrice,
-                    prices: {usdEthPrice, usdSolPrice, usdVetPrice, usdAdaPrice, usdIpcPrice, usdApePrice, usdBonkPrice, usdGraphPrice}
                 }
             }
         }
@@ -216,18 +120,61 @@ function getAxiosInstance() {
         }
     }
 
+    const fetchDataFromMobulaApi = async (coin) => {
+
+        try {
+            const { data } = await axios.get(`https://api.mobula.io/api/1/market/data?asset=${coin}`,
+            {
+                headers: {
+                    'X-API-KEY': process.env.MOBULA_API_KEY,
+                },
+                method: 'GET',
+            })
+            return data
+        } catch (error) {
+            sendToGroovy(error)
+        }
+    }
+
+    const fetchDataFromModulaApiMultiCoins = async () => {
+        try {
+            const { data } = await axios.get(`https://api.mobula.io/api/1/market/multi-data?assets=bitcoin,ethereum,cardano,vechain,solana,apecoin,The Graph,Internet Computer,NEAR Protocol`,
+            // cardano,vechain,solana,bonk-token,apecoin,ipcoin,the-graph 
+            {
+                headers: {
+                    'X-API-KEY': process.env.MOBULA_API_KEY,
+                },
+                method: 'GET',
+            })
+            // console.log(data);
+            // sendToGroovy(`fetchDataFromModulaApiMultiCoins data: ${JSON.stringify(data)}`)
+            return data
+        } catch (error) {
+            sendToGroovy(`fetchDataFromModulaApiMultiCoins data: ${error}`)
+        }
+    }
+
     return {
         respondToUser,
         sendKeyboard,
         sendPicture,
-        fetchCoinbaseData,
         fetchDataFromCoinmarketcapApi,
         sendToGroovy,
+        fetchDataFromMobulaApi,
+        fetchDataFromModulaApiMultiCoins,
     }
 }
 
 module.exports = { axiosInstance: getAxiosInstance() }
 
+// const APECOIN_URL = "https://api.coingecko.com/api/v3/coins/apecoin"
+// const BONK_URL = "https://api.coingecko.com/api/v3/coins/bonk-token"
+// const ETHEREUM_URL = "https://api.coingecko.com/api/v3/coins/ethereum"
+// const SOLANA_URL = "https://api.coingecko.com/api/v3/coins/solana"
+// const VECHAIN_URL = "https://api.coingecko.com/api/v3/coins/vechain"
+// const IPCOIN_URL = "https://api.coingecko.com/api/v3/coins/ipcoin"
+// const ADA_URL = "https://api.coingecko.com/api/v3/coins/cardano"
+// const THEGRAPH_URL = "https://api.coingecko.com/api/v3/coins/the-graph"
 
 //     return {
 //         get(method, params) {

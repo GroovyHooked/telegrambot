@@ -9,10 +9,13 @@ const availableCommands = [
     '/setlimit',
     '/getmessages',
     '/getprice',
-    '/getpercentchange20mn',
+    '/getpercentchange5mn',
     '/getpercentchange1h',
+    '/getpercentchange2h',
+    '/getpercentchange3h',
+    '/getpercentchange4h',
     '/getallmessages',
-    'WIP/graph10minutes',
+    'WIP/graph5minutes',
     'WIP/graph1hour',
     '/menu',
 ];
@@ -29,7 +32,7 @@ const availableCommandsGPT = [
 
 const availableCommandsCrypto = [
     '/getprice',
-    '/getpercentchange20mn',
+    '/getpercentchange5mn',
     '/getpercentchange1h',
     '/getrate',
     '/setrate',
@@ -45,7 +48,7 @@ const availableCommandsCurrency = [
 ];
 
 const availableCommandsInProgress = [
-    '/graph10minutes',
+    '/graph5minutes',
     '/graph1hour',
 ];
 
@@ -65,8 +68,11 @@ const messages = [
     { role: "system", content: "Vous pouvez taper /clear pour effacer les messages en mémoire." },
     { role: "system", content: "Vous pouvez taper /getprice pour voir le prix du Bitcoin." },
     { role: "system", content: "Vous pouvez taper /getchange pour voir le taux de change." },
-    { role: "system", content: "Vous pouvez taper /getpercentchange20mn pour voir le taux de variation sur 10 minutes." },
+    { role: "system", content: "Vous pouvez taper /getpercentchange5mn pour voir le taux de variation sur 5 minutes." },
     { role: "system", content: "Vous pouvez taper /getpercentchange1h pour voir le taux de variation sur 1 heure." },
+    { role: "system", content: "Vous pouvez taper /getpercentchange2h pour voir le taux de variation sur 2 heures." },
+    { role: "system", content: "Vous pouvez taper /getpercentchange3h pour voir le taux de variation sur 3 heures." },
+    { role: "system", content: "Vous pouvez taper /getpercentchange4h pour voir le taux de variation sur 4 heures." },
     { role: "system", content: "Vous pouvez taper /getrate pour voir le taux de surveillance." },
     { role: "system", content: "Vous pouvez taper /setrate pour changer le taux de surveillance." },
     { role: "system", content: "Vous pouvez taper /getmodel pour voir le modèle utilisé." },
@@ -97,6 +103,53 @@ const rateOptions = [
     [{ text: 'Taux: 1%', callback_data: 'choix4' }],
 ];
 
+const pricesAndVariation = {
+    btc: {
+        variation: 0,
+        prices: [],
+        quantity: 0.12781609 
+    },
+    eth: {
+        variation: 0,
+        prices: [],
+        quantity: 0.48918144
+    },
+    ada: {
+        variation: 0,
+        prices: [],
+        quantity: 343.89062100
+    },
+    vet: {
+        variation: 0,
+        prices: [],
+        quantity: 8519.04997533
+    },
+    graph: {
+        variation: 0,
+        prices: [],
+        quantity: 617.98731119
+    },
+    icp: {
+        variation: 0,
+        prices: [],
+        quantity: 22.83737024
+    },
+    sol: {
+        variation: 0,
+        prices: [],
+        quantity: 4.854250409
+    },
+    ape: {
+        variation: 0,
+        prices: [],
+        quantity: 76.89614362
+    },
+    near: {
+        variation: 0,
+        prices: [],
+        quantity: 58.00145030
+    },
+}
 
 module.exports = {
     availableCommands,
@@ -111,4 +164,5 @@ module.exports = {
     availableCommandsVarious,
     availableCommandsCurrency,
     availableCommandsInProgress,
+    pricesAndVariation,
 }

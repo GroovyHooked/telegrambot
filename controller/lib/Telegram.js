@@ -1,10 +1,10 @@
 require('dotenv').config();
-const fs = require("fs");
-const path = require('path');
+// const fs = require("fs");
+// const path = require('path');
 
 const { axiosInstance } = require("./axios");
 const { sendMessagetoGpt } = require("../../chatGPT/communication.js");
-const { createNumericCurveWithAxes } = require("../../charts/index.js");
+// const { createNumericCurveWithAxes } = require("../../charts/index.js");
 const crypto = require("../../market/crypto.js");
 const variables = require("./variables.js");
 const { exchangeInstance } = require("../../market/currency.js");
@@ -12,16 +12,12 @@ const { exchangeInstance } = require("../../market/currency.js");
 let MODEL = "gpt-3.5-turbo";
 let NB_OF_MESSAGES_TO_KEEP = 5;
 
-const racineDuProjet = path.join(__dirname, '../../'); // Remonte d'un répertoire
-const imageUrl = path.join(racineDuProjet, 'charts', 'graph.png');
-console.log(imageUrl);
-console.log(fs.existsSync(imageUrl))
+// const racineDuProjet = path.join(__dirname, '../../'); // Remonte d'un répertoire
+// const imageUrl = path.join(racineDuProjet, 'charts', 'graph.png');
+// console.log(imageUrl);
+// console.log(fs.existsSync(imageUrl))
 
-crypto.initCoinbaseApi(axiosInstance.sendToGroovy);
-crypto.mainCoinbaseApi(axiosInstance.sendToGroovy);
-setInterval(() => {
-    crypto.mainCoinbaseApi(axiosInstance.sendToGroovy)
-}, 120000);
+
 
 async function handleMessage(messageObj) {
 
@@ -152,18 +148,18 @@ async function handleCommands(content, messageObj) {
             if (NB_OF_MESSAGES_TO_KEEP === 15) return axiosInstance.respondToUser(messageObj, 'La limite de mémoire est déjà de 15 messages.');
             NB_OF_MESSAGES_TO_KEEP = 15;
             adjusteMemoryLimitAndRespond(MODEL, NB_OF_MESSAGES_TO_KEEP, variables.messages, variables.messagesGPT4, messageObj);
-        case '/graph10minutes':
-            await createNumericCurveWithAxes(crypto.btcLast10Prices)
-            axiosInstance.sendPicture(imageUrl, process.env.CHAT_ID);
-            return true
-        case '/graph1hour':
-            await createNumericCurveWithAxes(crypto.btcLastHourPrices)
-            axiosInstance.sendPicture(imageUrl, process.env.CHAT_ID);
-            return true
+        // case '/graph5minutes':
+        //     await createNumericCurveWithAxes(crypto.btcLast5Prices)
+        //     axiosInstance.sendPicture(imageUrl, process.env.CHAT_ID);
+        //     return true
+        // case '/graph1hour':
+        //     await createNumericCurveWithAxes(crypto.btcLastHourPrices)
+        //     axiosInstance.sendPicture(imageUrl, process.env.CHAT_ID);
+        //     return true
 
         // CRYPTO
         case '/getprice':
-            crypto.retreiveBitcoinPrice(axiosInstance.sendToGroovy);
+            crypto.retreiveCryptoPrices(axiosInstance.sendToGroovy);
             return true
         case '/getrate':
             const rate = crypto.getAlertThreshold();
@@ -192,15 +188,26 @@ async function handleCommands(content, messageObj) {
             crypto.setAlertThreshold(1)
             axiosInstance.respondToUser(messageObj, 'Vous avez choisi 1%. Le taux de surveillance est mis à jour.');
             return true
-        case '/getpercentchange10mn':
-            const { percentChange, minutes } = crypto.getPercentChange10mn();
-            axiosInstance.respondToUser(messageObj, `Le taux de variation sur ${minutes * 2} minutes est de ${percentChange}%.`);
+        case '/getpercentchange5mn':
+            const { percentChange, minutes } = crypto.getPercentChange5mn('btc');
+            axiosInstance.respondToUser(messageObj, `Le taux de variation sur ${minutes} minutes est de ${percentChange}%.`);
             return true
         case '/getpercentchange1h':
-            const { percentChange1h, time } = crypto.getPercentChange1h();
-            axiosInstance.respondToUser(messageObj, `Le taux de variation sur ${time * 2 < 60 ? time * 2 : 1} ${time * 2 < 60 ? 'minutes' : 'heure'} est de ${percentChange1h}%.`);
+            const { percentChange1h, time } = crypto.getPercentChangePerMinutes('btc', 60);
+            axiosInstance.respondToUser(messageObj, `Le taux de variation du BTC sur ${time < 60 ? time : 1} ${time < 60 ? 'minutes' : 'heure'} est de ${percentChange1h}%.`);
             return true
-
+        case '/getpercentchange2h':
+            const { percentChange2h, time2h } = crypto.getPercentChangePerMinutes('btc', 120);
+            axiosInstance.respondToUser(messageObj, `Le taux de variation du BTC sur ${time2h < 120 ? time2h : 2} ${time2h < 120 ? 'minutes' : 'heures'} est de ${percentChange2h}%.`);
+            return true
+        case '/getpercentchange3h':
+            const { percentChange3h, time3h } = crypto.getPercentChangePerMinutes('btc', 180);
+            axiosInstance.respondToUser(messageObj, `Le taux de variation du BTC sur ${time3h < 180 ? time3h : 3} ${time3h < 180 ? 'minutes' : 'heures'} est de ${percentChange3h}%.`);
+            return true
+        case '/getpercentchange4h':
+            const { percentChange4h, time4h } = crypto.getPercentChangePerMinutes('btc', 240);
+            axiosInstance.respondToUser(messageObj, `Le taux de variation du BTC sur ${time4h < 240 ? time4h : 4} ${time4h < 240 ? 'minutes' : 'heures'} est de ${percentChange4h}%.`);
+            return true
         // CURRENCY
         case '/getchange':
             const message = await exchangeInstance.getExchangeRate();
@@ -217,7 +224,7 @@ module.exports = { handleMessage };
 // Adjust memory limit
 function adjusteMemoryLimitAndRespond(MODEL, NB_OF_MESSAGES_TO_KEEP, messages, messagesGPT4, messageObj) {
     if (MODEL === "gpt-3.5-turbo") {
-        messagesToKeep = NB_OF_MESSAGES_TO_KEEP + 15;
+        const messagesToKeep = NB_OF_MESSAGES_TO_KEEP + 15;
         if (messages.length > messagesToKeep) messages.splice(messagesToKeep);
         axiosInstance.respondToUser(messageObj, `Vous avez choisi ${NB_OF_MESSAGES_TO_KEEP}. La limite de mémoire est mise à jour pour le modèle ${MODEL}.`);
         return true
@@ -269,6 +276,18 @@ async function handleSpecialCommands(content, messageObj) {
         if (amountNumber) {
             const change = await exchangeInstance.getExchangeRateForAmount(amountNumber);
             axiosInstance.respondToUser(messageObj, change);
+            return true
+        } else {
+            axiosInstance.respondToUser(messageObj, 'Veuillez entrer un nombre valide.');
+            return true
+        }
+    }
+    if (content.startsWith('/getpercentchange=')) {
+        const time = content.split('=')[1];
+        const timeNumber = Number(time);
+        if (timeNumber) {
+            const { percentChange, minutes } = crypto.getPercentChangePerMinutes(timeNumber);
+            axiosInstance.respondToUser(messageObj, `Le taux de variation sur ${minutes} minutes est de ${percentChange}%.`);
             return true
         } else {
             axiosInstance.respondToUser(messageObj, 'Veuillez entrer un nombre valide.');
