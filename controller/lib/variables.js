@@ -1,6 +1,8 @@
 const availableCommands = [
     '/getrate',
     '/setrate',
+    '/getrateshitcoin',
+    '/setrateshitcoin',
     '/getmodel',
     '/setmodel',
     '/help',
@@ -34,8 +36,13 @@ const availableCommandsCrypto = [
     '/getprice',
     '/getpercentchange5mn',
     '/getpercentchange1h',
+    '/getpercentchange2h',
+    '/getpercentchange3h',
+    '/getpercentchange4h',
     '/getrate',
     '/setrate',
+    '/getrateshitcoin',
+    '/setrateshitcoin',
 ];
 
 const availableCommandsVarious = [
@@ -54,7 +61,7 @@ const availableCommandsInProgress = [
 
 const menuOptions = [
     [{ text: '@Modèle', callback_data: 'choix1' }],
-    [{ text: '@Bitcoin', callback_data: 'choix2' }],
+    [{ text: '@Crypto', callback_data: 'choix2' }],
     [{ text: '@Currency', callback_data: 'choix3' }],
     [{ text: '@Various', callback_data: 'choix4' }],
     [{ text: '@In Progress', callback_data: 'choix5' }],
@@ -103,53 +110,13 @@ const rateOptions = [
     [{ text: 'Taux: 1%', callback_data: 'choix4' }],
 ];
 
-const pricesAndVariation = {
-    btc: {
-        variation: 0,
-        prices: [],
-        quantity: 0.12781609 
-    },
-    eth: {
-        variation: 0,
-        prices: [],
-        quantity: 0.48918144
-    },
-    ada: {
-        variation: 0,
-        prices: [],
-        quantity: 343.89062100
-    },
-    vet: {
-        variation: 0,
-        prices: [],
-        quantity: 8519.04997533
-    },
-    graph: {
-        variation: 0,
-        prices: [],
-        quantity: 617.98731119
-    },
-    icp: {
-        variation: 0,
-        prices: [],
-        quantity: 22.83737024
-    },
-    sol: {
-        variation: 0,
-        prices: [],
-        quantity: 4.854250409
-    },
-    ape: {
-        variation: 0,
-        prices: [],
-        quantity: 76.89614362
-    },
-    near: {
-        variation: 0,
-        prices: [],
-        quantity: 58.00145030
-    },
-}
+const rateOptionsShitcoins = [
+    [{ text: 'SC-Taux: 0.2%', callback_data: 'choix2' }],
+    [{ text: 'SC-Taux: 0.5%', callback_data: 'choix3' }],
+    [{ text: 'SC-Taux: 1%', callback_data: 'choix4' }],
+    [{ text: 'SC-Taux: 2%', callback_data: 'choix1' }],
+    [{ text: 'SC-Taux: 3%', callback_data: 'choix1' }],
+];
 
 module.exports = {
     availableCommands,
@@ -158,11 +125,11 @@ module.exports = {
     modelOptions,
     limitOptions,
     rateOptions,
+    rateOptionsShitcoins,
     menuOptions,
     availableCommandsGPT,
     availableCommandsCrypto,
     availableCommandsVarious,
     availableCommandsCurrency,
     availableCommandsInProgress,
-    pricesAndVariation,
 }
