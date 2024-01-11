@@ -4,9 +4,7 @@ const FormData = require('form-data');
 const fs = require("fs");
 
 const BASE_URL = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_API_KEY}`
-
 const BITCOIN_URL = "https://api.coingecko.com/api/v3/coins/bitcoin"
-
 const COINMARKETCAP_URL = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest'
 
 function getAxiosInstance() {
@@ -137,6 +135,9 @@ function getAxiosInstance() {
     }
 
     const fetchDataFromModulaApiMultiCoins = async () => {
+        // https://docs.mobula.io/api-reference/docs/market-asset-query
+        // https://docs.mobula.io/api-reference/endpoint/market-multi-data
+        // https://docs.mobula.io/api-reference/endpoint/all
         try {
             const { data } = await axios.get(`https://api.mobula.io/api/1/market/multi-data?assets=bitcoin,ethereum,cardano,vechain,solana,apecoin,The Graph,Internet Computer,NEAR Protocol`,
             // cardano,vechain,solana,bonk-token,apecoin,ipcoin,the-graph 

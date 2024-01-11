@@ -1,11 +1,17 @@
 require('dotenv').config();
 const { axiosInstance } = require("../controller/lib/axios.js");
-const variables = require("../controller/lib/variables.js");
-const { insertCryptoData, getCryptoLast5Prices, dbRequestLastprices, getQuantities } = require("../database/database.js");
+const { insertCryptoData,
+    getCryptoLast5Prices,
+    dbRequestLastprices,
+    getQuantities,
+    getAlertThresholdShitcoinDb,
+    setAlertThresholdShitcoinDb,
+    getAlertThresholdDb,
+    setAlertThresholdDb, } = require("../database/database.js");
 const { exchangeInstance } = require("./currency.js");
 
-let alertThreshold = 0.5; // Percentage change to trigger an alert
-let alertThresholdShitcoin = 2; // Percentage change to trigger an alert
+let alertThreshold; // Percentage change to trigger an alert  ALERT_THRESHOLD
+let alertThresholdShitcoin; // Percentage change to trigger an alert ALERT_THRESHOLD_SHITCOIN
 
 fetchCryptoData().then(data => {
     populateCryptoDataAndHandleResult(data, axiosInstance.sendToGroovy)
@@ -46,7 +52,21 @@ function populateCryptoDataAndHandleResult(cryptoObjet, sendMessageCallback) {
     handleCryptoPrice(sendMessageCallback)
 }
 
-function handleCryptoPrice(sendMessageCallback) {
+async function handleCryptoPrice(sendMessageCallback) {
+    await getAlertThresholdDb().then(data => {
+        if (typeof data === 'object') {
+            alertThreshold = Number(data.value)
+        } else {
+            alertThreshold = Number(data[0].value)
+        }
+    })
+    await getAlertThresholdShitcoinDb().then(data => {
+        if (typeof data === 'object') {
+            alertThresholdShitcoin = Number(data.value)
+        } else {
+            alertThresholdShitcoin = Number(data[0].value)
+        }
+    })
     const cryptos = ['bitcoin', 'ethereum', 'cardano', 'vechain', 'The Graph', 'Internet Computer', 'solana', 'apecoin', 'NEAR Protocol'];
     cryptos.forEach(crypto => {
         getCryptoLast5Prices(crypto).then(data => {
@@ -67,7 +87,7 @@ function handleCryptoPrice(sendMessageCallback) {
 function sendAlertMessage(crypto, percentChange, prices, sendMessageCallback) {
     const highestCryptoPrice = Math.max(...prices);
     const lowestCryptoPrice = Math.min(...prices);
-    const trend = Math.sign(percentChange) === 1 ? 'Augmentaion' : 'Baisse';
+    const trend = Math.sign(percentChange) === 0 ? 'Neutre' : Math.sign(percentChange) === 1 ? 'Augmentaion' : 'Baisse';
     const tempMessage = [
         `<strong>${trend ? trend : 'N/A'} du prix du ${crypto}.</strong>`,
         `Au cours des 5 dernières minutes`,
@@ -99,7 +119,8 @@ async function retreiveCryptoPrices(sendMessageCallback) {
         }));
 
         const totalValueOwned = allValuesOwned.reduce((a, b) => a + b, 0)
-        const totalInEuro = await exchangeInstance.convertToEuro(totalValueOwned)
+        let totalInEuro = await exchangeInstance.convertToEuro(totalValueOwned)
+        totalInEuro = Number(totalInEuro).toFixed(2)
         message += `Total: ${totalValueOwned.toFixed(2)}$`
         message += ` (${totalInEuro}€)`
         sendMessageCallback(message);
@@ -110,18 +131,10 @@ async function retreiveCryptoPrices(sendMessageCallback) {
 }
 
 function computePercentageVariation(arrayOfPrices) {
-    if(!arrayOfPrices) return 'Le tableau passé en paramètre est vide.(function computePercentageVariation)'
-    const firstElement = arrayOfPrices[0];
-    const elementType = typeof firstElement;
-    if (elementType === 'object') {
-        const diff = arrayOfPrices[arrayOfPrices.length - 1].price - arrayOfPrices[0].price;
-        const variation = diff / arrayOfPrices[0].price * 100;
-        return variation;
-    } else {
-        const diff = arrayOfPrices[arrayOfPrices.length - 1] - arrayOfPrices[0];
-        const variation = diff / arrayOfPrices[0] * 100;
-        return variation;
-    }
+    if (!arrayOfPrices) return 'Le tableau passé en undefined ou null est vide.(function computePercentageVariation)'
+    const diff = arrayOfPrices[0] - arrayOfPrices[arrayOfPrices.length - 1];
+    const variation = diff / arrayOfPrices[arrayOfPrices.length - 1] * 100;
+    return variation;
 }
 
 const getPercentChange5mn = async (coin) => {
@@ -132,7 +145,7 @@ const getPercentChange5mn = async (coin) => {
         });
         prices = data.map(item => item.price);
     })
-    if(!prices) return axiosInstance.sendToGroovy('Le tableau "prices" est vide. (function getPercentChange5mn)')
+    if (!prices) return axiosInstance.sendToGroovy('Le tableau "prices" est vide. (function getPercentChange5mn)')
     const percentChange = computePercentageVariation(prices).toFixed(2)
     return {
         percentChange,
@@ -149,7 +162,7 @@ const getPercentChangePerMinutes = async (coin, minutes) => {
         });
         prices = data.map(item => item.price);
     })
-    if(!prices) return axiosInstance.sendToGroovy('Le tableau "prices" est vide. (function getPercentChangePerMinutes)')
+    if (!prices) return axiosInstance.sendToGroovy('Le tableau "prices" est vide. (function getPercentChangePerMinutes)')
     const percentChange = computePercentageVariation(prices).toFixed(2)
     return {
         percentChange,
@@ -157,13 +170,34 @@ const getPercentChangePerMinutes = async (coin, minutes) => {
     }
 };
 
-const getAlertThreshold = () => alertThreshold;
-const getAlertThresholdShitcoin = () => alertThresholdShitcoin;
-const setAlertThreshold = (newThreshold) => {
-    alertThreshold = newThreshold;
+const getAlertThreshold = async () => {
+    await getAlertThresholdDb().then(data => {
+        if (typeof data.data === 'object') {
+            alertThreshold = Number(data.value)
+        } else {
+            alertThreshold = Number(data[0].value)
+        }
+    })
+    return alertThreshold
+};
+
+const getAlertThresholdShitcoin = async () => {
+    await getAlertThresholdShitcoinDb().then(data => {
+        if (typeof data.data === 'object') {
+            alertThresholdShitcoin = Number(data.value)
+        } else {
+            alertThresholdShitcoin = Number(data[0].value)
+        }
+    })
+    return alertThresholdShitcoin
+};
+
+const setAlertThreshold = async (newThreshold) => {
+    await setAlertThresholdDb(newThreshold)
 }
-const setAlertThresholdShitcoin = (newThreshold) => {
-    alertThresholdShitcoin = newThreshold;
+
+const setAlertThresholdShitcoin = async (newThreshold) => {
+    await setAlertThresholdShitcoinDb(newThreshold)
 }
 
 

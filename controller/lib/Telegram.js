@@ -5,9 +5,9 @@ const { sendMessagetoGpt } = require("../../chatGPT/communication.js");
 const crypto = require("../../market/crypto.js");
 const variables = require("./variables.js");
 const { exchangeInstance } = require("../../market/currency.js");
-
+const { getNB_OF_MESSAGES_TO_KEEP, setNB_OF_MESSAGES_TO_KEEP } = require("../../database/database.js");
 let MODEL = "gpt-3.5-turbo";
-let NB_OF_MESSAGES_TO_KEEP = 5;
+let NB_OF_MESSAGES_TO_KEEP 
 
 async function handleMessage(messageObj) {
 
@@ -19,10 +19,13 @@ async function handleMessage(messageObj) {
     const content = messageObj?.text;
 
     if (content) {
+        // Check if the message is a command
         const isCommand = await handleCommands(content, messageObj);
         const isSpecialCommand = await handleSpecialCommands(content, messageObj);
 
+        // If the message is not a command, send it to GPT
         if (!isCommand && !isSpecialCommand) {
+            await getNB_OF_MESSAGES_TO_KEEP().then((result) => NB_OF_MESSAGES_TO_KEEP = result)
             if (MODEL === "gpt-3.5-turbo") {
                 if (variables.messages.length >= NB_OF_MESSAGES_TO_KEEP + 15) {
                     variables.messages.splice(15, 1);
@@ -106,6 +109,7 @@ async function handleCommands(content, messageObj) {
             clearMessages(messageObj)
             return true
         case '/getlimit':
+            await getNB_OF_MESSAGES_TO_KEEP().then((result) => NB_OF_MESSAGES_TO_KEEP = result)
             axiosInstance.respondToUser(messageObj, `La limite de mémoire est de ${NB_OF_MESSAGES_TO_KEEP} messages.`);
             return true
         case '/getmessages':
@@ -125,82 +129,63 @@ async function handleCommands(content, messageObj) {
             axiosInstance.sendKeyboard('Choisissez une limite :', variables.limitOptions, process.env.CHAT_ID);
             return true
         case 'Limite: 5':
-            if (NB_OF_MESSAGES_TO_KEEP === 5) return axiosInstance.respondToUser(messageObj, 'La limite de mémoire est déjà de 5 messages.');
-            NB_OF_MESSAGES_TO_KEEP = 5;
-            adjusteMemoryLimitAndRespond(MODEL, NB_OF_MESSAGES_TO_KEEP, variables.messages, variables.messagesGPT4, messageObj);
+            adjusteMemoryLimitAndRespond(5, MODEL, NB_OF_MESSAGES_TO_KEEP, variables.messages, variables.messagesGPT4, messageObj);
+            return true
         case 'Limite: 10':
-            if (NB_OF_MESSAGES_TO_KEEP === 10) return axiosInstance.respondToUser(messageObj, 'La limite de mémoire est déjà de 10 messages.');
-            NB_OF_MESSAGES_TO_KEEP = 10;
-            adjusteMemoryLimitAndRespond(MODEL, NB_OF_MESSAGES_TO_KEEP, variables.messages, variables.messagesGPT4, messageObj)
+            adjusteMemoryLimitAndRespond(10, MODEL, NB_OF_MESSAGES_TO_KEEP, variables.messages, variables.messagesGPT4, messageObj)
+            return true
         case 'Limite: 3':
-            if (NB_OF_MESSAGES_TO_KEEP === 3) return axiosInstance.respondToUser(messageObj, 'La limite de mémoire est déjà de 3 messages.');
-            NB_OF_MESSAGES_TO_KEEP = 3;
-            adjusteMemoryLimitAndRespond(MODEL, NB_OF_MESSAGES_TO_KEEP, variables.messages, variables.messagesGPT4, messageObj)
+            adjusteMemoryLimitAndRespond(3, MODEL, NB_OF_MESSAGES_TO_KEEP, variables.messages, variables.messagesGPT4, messageObj)
+            return true
         case 'Limite: 15':
-            if (NB_OF_MESSAGES_TO_KEEP === 15) return axiosInstance.respondToUser(messageObj, 'La limite de mémoire est déjà de 15 messages.');
-            NB_OF_MESSAGES_TO_KEEP = 15;
-            adjusteMemoryLimitAndRespond(MODEL, NB_OF_MESSAGES_TO_KEEP, variables.messages, variables.messagesGPT4, messageObj);
-        // case '/graph5minutes':
-        //     await createNumericCurveWithAxes(crypto.btcLast5Prices)
-        //     axiosInstance.sendPicture(imageUrl, process.env.CHAT_ID);
-        //     return true
-        // case '/graph1hour':
-        //     await createNumericCurveWithAxes(crypto.btcLastHourPrices)
-        //     axiosInstance.sendPicture(imageUrl, process.env.CHAT_ID);
-        //     return true
+            adjusteMemoryLimitAndRespond(15, MODEL, NB_OF_MESSAGES_TO_KEEP, variables.messages, variables.messagesGPT4, messageObj);
+            return true
+
 
         // CRYPTO
         case '/getprice':
             crypto.retreiveCryptoPrices(axiosInstance.sendToGroovy);
             return true
         case '/getrate':
-            const rate = crypto.getAlertThreshold();
-            axiosInstance.respondToUser(messageObj, `Le taux de suerveillance est: ${rate}`);
+            const rate = await crypto.getAlertThreshold();
+            axiosInstance.respondToUser(messageObj, `Le taux de suerveillance est de ${rate}%`);
             return true
         case '/setrate':
             axiosInstance.sendKeyboard('Choisissez un taux :', variables.rateOptions, process.env.CHAT_ID);
             return true
         case 'Taux: 0.2%':
-            if (crypto.getAlertThreshold() === 0.2) return axiosInstance.respondToUser(messageObj, 'Le taux de surveillance est déjà de 0.2%.');
-            crypto.setAlertThreshold(0.2)
-            axiosInstance.respondToUser(messageObj, 'Vous avez choisi 0.2%. Le taux de surveillance est mis à jour.');
+            modifyAlertThreshold(messageObj, 0.2, crypto.getAlertThreshold, crypto.setAlertThreshold)
             return true
         case 'Taux: 0.5%':
-            if (crypto.getAlertThreshold() === 0.5) return axiosInstance.respondToUser(messageObj, 'Le taux de surveillance est déjà de 0.5%.');
-            crypto.setAlertThreshold(0.5)
-            axiosInstance.respondToUser(messageObj, 'Vous avez choisi 0.5%. Le taux de surveillance est mis à jour.');
+            modifyAlertThreshold(messageObj, 0.5, crypto.getAlertThreshold, crypto.setAlertThreshold)
             return true
         case 'Taux: 0.01%':
-            if (crypto.getAlertThreshold() === 0.01) return axiosInstance.respondToUser(messageObj, 'Le taux de surveillance est déjà de 0.01%.');
-            crypto.setAlertThreshold(0.01)
-            axiosInstance.respondToUser(messageObj, 'Vous avez choisi 0.01%. Le taux de surveillance est mis à jour.');
+            modifyAlertThreshold(messageObj, 0.01, crypto.getAlertThreshold, crypto.setAlertThreshold)
             return true
         case 'Taux: 1%':
-            if (crypto.getAlertThreshold() === 1) return axiosInstance.respondToUser(messageObj, 'Le taux de surveillance est déjà de 1%.');
-            crypto.setAlertThreshold(1)
-            axiosInstance.respondToUser(messageObj, 'Vous avez choisi 1%. Le taux de surveillance est mis à jour.');
+            modifyAlertThreshold(messageObj, 1, crypto.getAlertThreshold, crypto.setAlertThreshold)
             return true
         case '/getrateshitcoin':
-            const rateShitcoin = crypto.getAlertThresholdShitcoin();
-            axiosInstance.respondToUser(messageObj, `Le taux de suerveillance pour les shitcoins est: ${rateShitcoin}`);
+            const rateShitcoin = await crypto.getAlertThresholdShitcoin();
+            axiosInstance.respondToUser(messageObj, `Le taux de suerveillance pour les shitcoins est de ${rateShitcoin}%`);
             return true
         case '/setrateshitcoin':
             axiosInstance.sendKeyboard('Choisissez un taux :', variables.rateOptionsShitcoins, process.env.CHAT_ID);
             return true
         case 'SC-Taux: 0.2%':
-            modifyAlertThreshold(messageObj, 0.2, crypto.getAlertThresholdShitcoin)
+            modifyAlertThreshold(messageObj, 0.2, crypto.getAlertThresholdShitcoin, crypto.setAlertThresholdShitcoin)
             return true
         case 'SC-Taux: 0.5%':
-            modifyAlertThreshold(messageObj, 0.5, crypto.getAlertThresholdShitcoin)
+            modifyAlertThreshold(messageObj, 0.5, crypto.getAlertThresholdShitcoin, crypto.setAlertThresholdShitcoin)
             return true
         case 'SC-Taux: 1%':
-            modifyAlertThreshold(messageObj, 1, crypto.getAlertThresholdShitcoin)
+            modifyAlertThreshold(messageObj, 1, crypto.getAlertThresholdShitcoin, crypto.setAlertThresholdShitcoin)
             return true
         case 'SC-Taux: 2%':
-            modifyAlertThreshold(messageObj, 2, crypto.getAlertThresholdShitcoin)
+            modifyAlertThreshold(messageObj, 2, crypto.getAlertThresholdShitcoin, crypto.setAlertThresholdShitcoin)
             return true
         case 'SC-Taux: 3%':
-            modifyAlertThreshold(messageObj, 3, crypto.getAlertThresholdShitcoin)
+            modifyAlertThreshold(messageObj, 3, crypto.getAlertThresholdShitcoin, crypto.setAlertThresholdShitcoin)
             return true
         case '/getpercentchange5mn':
             const { percentChange, minutes, coin } = await crypto.getPercentChange5mn('bitcoin');
@@ -223,15 +208,23 @@ async function handleCommands(content, messageObj) {
             const message = await exchangeInstance.getExchangeRate();
             axiosInstance.respondToUser(messageObj, message);
             return true
+        // case '/graph5minutes':
+        //     await createNumericCurveWithAxes(crypto.btcLast5Prices)
+        //     axiosInstance.sendPicture(imageUrl, process.env.CHAT_ID);
+        //     return true
+        // case '/graph1hour':
+        //     await createNumericCurveWithAxes(crypto.btcLastHourPrices)
+        //     axiosInstance.sendPicture(imageUrl, process.env.CHAT_ID);
+        //     return true
 
         default:
             return false
     }
 }
 
-function modifyAlertThreshold(messageObj, rate, getterCallback) {
-    if(getterCallback() === rate) return axiosInstance.respondToUser(messageObj, `Le taux de surveillance est déjà de ${rate}%.`);
-    crypto.setAlertThreshold(rate)
+async function modifyAlertThreshold(messageObj, rate, getterCallback, setterCallback) {
+    if (getterCallback() === rate) return axiosInstance.respondToUser(messageObj, `Le taux de surveillance est déjà de ${rate}%.`);
+    await setterCallback(rate)
     axiosInstance.respondToUser(messageObj, `Le taux de surveillance est mis à jour à ${rate}%.`);
 }
 
@@ -253,16 +246,16 @@ async function getpercentChangePerMinutes(coin, minutes, messageObj) {
 }
 
 // Adjust memory limit
-function adjusteMemoryLimitAndRespond(MODEL, NB_OF_MESSAGES_TO_KEEP, messages, messagesGPT4, messageObj) {
+async function adjusteMemoryLimitAndRespond(limit, MODEL, NB_OF_MESSAGES_TO_KEEP, messages, messagesGPT4, messageObj) {
+    await getNB_OF_MESSAGES_TO_KEEP().then((result) => NB_OF_MESSAGES_TO_KEEP = result)
+    if (NB_OF_MESSAGES_TO_KEEP === limit) return axiosInstance.respondToUser(messageObj, `La limite de mémoire est déjà de ${limit} messages.`);
+    await setNB_OF_MESSAGES_TO_KEEP(limit);
     if (MODEL === "gpt-3.5-turbo") {
-        const messagesToKeep = NB_OF_MESSAGES_TO_KEEP + 15;
-        if (messages.length > messagesToKeep) messages.splice(messagesToKeep);
-        axiosInstance.respondToUser(messageObj, `Vous avez choisi ${NB_OF_MESSAGES_TO_KEEP}. La limite de mémoire est mise à jour pour le modèle ${MODEL}.`);
-        return true
+        if (messages.length > limit + 15) messages.splice(limit + 15);
+        axiosInstance.respondToUser(messageObj, `Vous avez choisi ${limit}. La limite de mémoire est mise à jour pour le modèle ${MODEL}.`);
     } else if (MODEL === "gpt-4") {
-        if (messagesGPT4.length > NB_OF_MESSAGES_TO_KEEP) messagesGPT4.splice(NB_OF_MESSAGES_TO_KEEP);
-        axiosInstance.respondToUser(messageObj, `Vous avez choisi ${NB_OF_MESSAGES_TO_KEEP}. La limite de mémoire est mise à jour pour le modèle ${MODEL}.`);
-        return true
+        if (messagesGPT4.length > limit) messagesGPT4.splice(limit);
+        axiosInstance.respondToUser(messageObj, `Vous avez choisi ${limit}. La limite de mémoire est mise à jour pour le modèle ${MODEL}.`);
     }
 }
 
