@@ -298,7 +298,7 @@ async function handleSpecialCommands(content, messageObj) {
         const amount = content.split('=')[1];
         const amountNumber = Number(amount);
         if (amountNumber) {
-            const change = await exchangeInstance.getExchangeRateForAmount(amountNumber);
+            const change = await exchangeInstance.convertToDollar(amountNumber);
             axiosInstance.respondToUser(messageObj, change);
             return true
         } else {

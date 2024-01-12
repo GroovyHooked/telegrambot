@@ -77,9 +77,8 @@ function exchangeRateFor1(response) {
 
 function exchangeRateInUsd(response, amount) {
     const { base_currency_code, rates } = response;
-    const { currency_name, rate_for_amount } = rates.USD;
-    const USD = currency_name.split(' ').forEach(word => word[0].toUpperCase() + word.slice(1));
-    const message = `${amount} ${base_currency_code} = ${Number(rate_for_amount).toFixed(2)} ${USD}`;
+    const { rate_for_amount } = rates.USD;
+    const message = `${amount}${base_currency_code} = ${Number(rate_for_amount).toFixed(2)}USD`;
     return message;
 }
 

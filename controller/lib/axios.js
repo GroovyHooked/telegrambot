@@ -32,6 +32,13 @@ function getAxiosInstance() {
         });
     }
 
+    const answerCallbackQuery = (data) => {
+        return get("answerCallbackQuery", {
+            callback_query_id: data.callback_query.id,
+            text: data.callback_query.data,
+        })
+    }
+
     const post = (method, data) => {
         return axios({
             method: "post",
@@ -163,6 +170,7 @@ function getAxiosInstance() {
         sendToGroovy,
         fetchDataFromMobulaApi,
         fetchDataFromModulaApiMultiCoins,
+        answerCallbackQuery,
     }
 }
 

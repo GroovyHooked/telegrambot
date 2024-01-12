@@ -1,5 +1,21 @@
 const sqlite3 = require('sqlite3').verbose();
 let sql;
+// const { axiosInstance } = require('../controller/lib/axios.js');
+
+// const data = {
+//     callback_query: {
+//       id: '1622615205',
+//       data: 'Some data',
+//     },
+//   };
+
+// axiosInstance.answerCallbackQuery(data)
+// .then(response => {
+//   console.log(response.data); // Handle the response
+// })
+// .catch(error => {
+//   console.error(error); // Handle any errors
+// });
 
 const requestsPerMinute = 1;
 
@@ -55,21 +71,6 @@ function performInsertion(data, name) {
             return;
         }
         // console.log('Inserted crypto data.');
-    });
-}
-
-
-function getCryptoLast5Prices(name) {
-    return new Promise((resolve, reject) => {
-        sql = `SELECT price,timestamp FROM crypto WHERE name = '${name}' ORDER BY timestamp DESC LIMIT 5`;
-        db.all(sql, (err, rows) => {
-            if (err) {
-                console.error(err.message);
-                reject(err);
-            } else {
-                resolve(rows);
-            }
-        });
     });
 }
 
@@ -203,7 +204,6 @@ function setAlertThresholdDb(value) {
 
 module.exports = {
     insertCryptoData,
-    getCryptoLast5Prices,
     dbRequestLastprices,
     dbRequestLastprice,
     getQuantities,
@@ -258,7 +258,7 @@ module.exports = {
 
 
 // modify bitcoin quantity in crypto_quantity table
-// sql = `UPDATE crypto_quantity SET quantity = 0.13931606 WHERE name = 'bitcoin'`;
+// sql = `UPDATE crypto_quantity SET quantity = 0.0 WHERE name = 'bitcoin'`;
 // db.run(sql, (err) => {
 //     if (err) {
 //         console.error(err.message);

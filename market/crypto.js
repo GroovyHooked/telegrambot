@@ -1,7 +1,6 @@
 require('dotenv').config();
 const { axiosInstance } = require("../controller/lib/axios.js");
 const { insertCryptoData,
-    getCryptoLast5Prices,
     dbRequestLastprices,
     getQuantities,
     getAlertThresholdShitcoinDb,
@@ -12,6 +11,7 @@ const { exchangeInstance } = require("./currency.js");
 
 let alertThreshold; // Percentage change to trigger an alert  ALERT_THRESHOLD
 let alertThresholdShitcoin; // Percentage change to trigger an alert ALERT_THRESHOLD_SHITCOIN
+const NB_OF_API_REQUESTS_PER_SECOND = 4;
 
 fetchCryptoData().then(data => {
     populateCryptoDataAndHandleResult(data, axiosInstance.sendToGroovy)
@@ -21,7 +21,7 @@ setInterval(() => {
     fetchCryptoData().then(data => {
         populateCryptoDataAndHandleResult(data, axiosInstance.sendToGroovy)
     })
-}, 60000);
+}, 15000);
 
 async function fetchCryptoData() {
     try {
@@ -54,14 +54,14 @@ function populateCryptoDataAndHandleResult(cryptoObjet, sendMessageCallback) {
 
 async function handleCryptoPrice(sendMessageCallback) {
     await getAlertThresholdDb().then(data => {
-        if (typeof data === 'object') {
+        if (typeof data.data === 'object') {
             alertThreshold = Number(data.value)
         } else {
             alertThreshold = Number(data[0].value)
         }
     })
     await getAlertThresholdShitcoinDb().then(data => {
-        if (typeof data === 'object') {
+        if (typeof data.data === 'object') {
             alertThresholdShitcoin = Number(data.value)
         } else {
             alertThresholdShitcoin = Number(data[0].value)
@@ -69,7 +69,7 @@ async function handleCryptoPrice(sendMessageCallback) {
     })
     const cryptos = ['bitcoin', 'ethereum', 'cardano', 'vechain', 'The Graph', 'Internet Computer', 'solana', 'apecoin', 'NEAR Protocol'];
     cryptos.forEach(crypto => {
-        getCryptoLast5Prices(crypto).then(data => {
+        dbRequestLastprices(crypto, NB_OF_API_REQUESTS_PER_SECOND * 5).then(data => {
             data.forEach(element => {
                 element.timestamp = new Date(element.timestamp).toLocaleString().slice(12, 17);
             });
@@ -100,11 +100,17 @@ function sendAlertMessage(crypto, percentChange, prices, sendMessageCallback) {
     sendMessageCallback(message)
 }
 
+function computePercentageVariation(arrayOfPrices) {
+    if (!arrayOfPrices) return 'Le tableau passé en undefined ou null est vide.(function computePercentageVariation)'
+    const diff = arrayOfPrices[0] - arrayOfPrices[arrayOfPrices.length - 1];
+    const variation = diff / arrayOfPrices[arrayOfPrices.length - 1] * 100;
+    return variation;
+}
 
 async function retreiveCryptoPrices(sendMessageCallback) {
     try {
         const coins = ['bitcoin', 'ethereum', 'cardano', 'vechain', 'The Graph', 'Internet Computer', 'solana', 'apecoin', 'NEAR Protocol'];
-        const data = await Promise.all(coins.map(coin => getCryptoLast5Prices(coin)));
+        const data = await Promise.all(coins.map(coin => dbRequestLastprices(coin, NB_OF_API_REQUESTS_PER_SECOND * 5)));
         let message = ''
         let valueOwned = 0
         const allValuesOwned = []
@@ -130,16 +136,9 @@ async function retreiveCryptoPrices(sendMessageCallback) {
     }
 }
 
-function computePercentageVariation(arrayOfPrices) {
-    if (!arrayOfPrices) return 'Le tableau passé en undefined ou null est vide.(function computePercentageVariation)'
-    const diff = arrayOfPrices[0] - arrayOfPrices[arrayOfPrices.length - 1];
-    const variation = diff / arrayOfPrices[arrayOfPrices.length - 1] * 100;
-    return variation;
-}
-
 const getPercentChange5mn = async (coin) => {
     let prices
-    await getCryptoLast5Prices(coin).then(data => {
+    await dbRequestLastprices(coin, NB_OF_API_REQUESTS_PER_SECOND * 5).then(data => {
         data.forEach(element => {
             element.timestamp = new Date(element.timestamp).toLocaleString().slice(12, 17);
         });
@@ -156,7 +155,7 @@ const getPercentChange5mn = async (coin) => {
 
 const getPercentChangePerMinutes = async (coin, minutes) => {
     let prices
-    await dbRequestLastprices(coin, minutes).then(data => {
+    await dbRequestLastprices(coin, minutes * 4).then(data => {
         data.forEach(element => {
             element.timestamp = new Date(element.timestamp).toLocaleString().slice(12, 17);
         });
