@@ -192,16 +192,16 @@ async function handleCommands(content, messageObj) {
             axiosInstance.respondToUser(messageObj, `Le taux de variation du ${coin} sur ${minutes} minutes est de ${percentChange}%.`);
             return true
         case '/getpercentchange1h':
-            getPercentChangePerMinutesForAllCoins(60, messageObj)
+            await getPercentChangePerMinutesForAllCoins(60, messageObj)
             return true
         case '/getpercentchange2h':
-            getPercentChangePerMinutesForAllCoins(120, messageObj)
+            await getPercentChangePerMinutesForAllCoins(120, messageObj)
             return true
         case '/getpercentchange3h':
-            getPercentChangePerMinutesForAllCoins(180, messageObj)
+            await getPercentChangePerMinutesForAllCoins(180, messageObj)
             return true
         case '/getpercentchange4h':
-            getPercentChangePerMinutesForAllCoins(240, messageObj)
+            await getPercentChangePerMinutesForAllCoins(240, messageObj)
             return true
         // CURRENCY
         case '/getchange':
@@ -228,21 +228,13 @@ async function modifyAlertThreshold(messageObj, rate, getterCallback, setterCall
     axiosInstance.respondToUser(messageObj, `Le taux de surveillance est mis à jour à ${rate}%.`);
 }
 
-function getPercentChangePerMinutesForAllCoins(minutes, messageObj) {
-    getpercentChangePerMinutes('bitcoin', minutes, messageObj)
-    getpercentChangePerMinutes('ethereum', minutes, messageObj)
-    getpercentChangePerMinutes('cardano', minutes, messageObj)
-    getpercentChangePerMinutes('vechain', minutes, messageObj)
-    getpercentChangePerMinutes('The Graph', minutes, messageObj)
-    getpercentChangePerMinutes('Internet Computer', minutes, messageObj)
-    getpercentChangePerMinutes('solana', minutes, messageObj)
-    getpercentChangePerMinutes('apecoin', minutes, messageObj)
-    getpercentChangePerMinutes('NEAR Protocol', minutes, messageObj)
-}
-
-async function getpercentChangePerMinutes(coin, minutes, messageObj) {
-    const { percentChange, time } = await crypto.getPercentChangePerMinutes(coin, minutes);
-    axiosInstance.respondToUser(messageObj, `Le taux de variation du ${coin} sur ${time / 60} heure(s) est de ${percentChange}%.`);
+async function getPercentChangePerMinutesForAllCoins(minutes, messageObj) {
+    let messageString = '';
+    for (const coin of variables.portfolio) {
+        const { percentChange, time } = await crypto.getPercentChangePerMinutes(coin, minutes);
+        messageString += `${crypto.trendEmoji(percentChange)} <strong>${coin}</strong> ${time / 60} heure(s): <strong>${percentChange}%</strong>\n`;
+    }
+    axiosInstance.respondToUser(messageObj, messageString);
 }
 
 // Adjust memory limit

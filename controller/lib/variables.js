@@ -67,7 +67,6 @@ const menuOptions = [
     [{ text: '@In Progress', callback_data: 'choix5' }],
 ];
 
-
 const messages = [
     { role: "system", content: "Je suis un assistant dévoué, spécialisé dans l'art des réponses concises et précises. Je suis principalement là pour vous aider à utiliser les commandes de ce canal Telegram. Toutes les commandes sont répertoriées dans la liste avec le rôle \"system\". Je peux également vous aider à trouver des informations sur les commandes." },
     { role: "system", content: "Vous pouvez taper /help pour voir les commandes disponibles." },
@@ -118,6 +117,8 @@ const rateOptionsShitcoins = [
     [{ text: 'SC-Taux: 3%', callback_data: 'choix1' }],
 ];
 
+const portfolio = ['bitcoin', 'ethereum', 'cardano', 'vechain', 'The Graph', 'Internet Computer', 'solana', 'apecoin', 'NEAR Protocol'];
+
 module.exports = {
     availableCommands,
     messages,
@@ -132,4 +133,5 @@ module.exports = {
     availableCommandsVarious,
     availableCommandsCurrency,
     availableCommandsInProgress,
+    portfolio,
 }

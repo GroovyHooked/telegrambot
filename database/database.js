@@ -265,3 +265,6 @@ module.exports = {
 //     }
 //     console.log('Updated crypto quantity.');
 // })
+
+// Query to get all entries from crypto tables, change timestamp to date format hh:mm, group by new format time hh:mm and delete entries when group by > 4 * 9
+// SELECT strftime('%H:%M', datetime(timestamp/1000, 'unixepoch')) as time, price, volume FROM crypto GROUP BY time HAVING COUNT(*) > 4 * 9 ORDER BY time DESC

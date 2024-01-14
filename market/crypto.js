@@ -8,6 +8,7 @@ const { insertCryptoData,
     getAlertThresholdDb,
     setAlertThresholdDb, } = require("../database/database.js");
 const { exchangeInstance } = require("./currency.js");
+const { portfolio } = require("../controller/lib/variables.js");
 
 let alertThreshold; // Percentage change to trigger an alert  ALERT_THRESHOLD
 let alertThresholdShitcoin; // Percentage change to trigger an alert ALERT_THRESHOLD_SHITCOIN
@@ -67,8 +68,7 @@ async function handleCryptoPrice(sendMessageCallback) {
             alertThresholdShitcoin = Number(data[0].value)
         }
     })
-    const cryptos = ['bitcoin', 'ethereum', 'cardano', 'vechain', 'The Graph', 'Internet Computer', 'solana', 'apecoin', 'NEAR Protocol'];
-    cryptos.forEach(crypto => {
+    portfolio.forEach(crypto => {
         dbRequestLastprices(crypto, NB_OF_API_REQUESTS_PER_SECOND * 5).then(data => {
             data.forEach(element => {
                 element.timestamp = new Date(element.timestamp).toLocaleString().slice(12, 17);
@@ -84,12 +84,15 @@ async function handleCryptoPrice(sendMessageCallback) {
     })
 }
 
+const trendEmoji = (percentChange) => Math.sign(percentChange) === 0 ? '🇨🇭' : Math.sign(percentChange) === 1 ? '📈' : '📉';
+
+
 function sendAlertMessage(crypto, percentChange, prices, sendMessageCallback) {
     const highestCryptoPrice = Math.max(...prices);
     const lowestCryptoPrice = Math.min(...prices);
     const trend = Math.sign(percentChange) === 0 ? 'Neutre' : Math.sign(percentChange) === 1 ? 'Augmentaion' : 'Baisse';
     const tempMessage = [
-        `<strong>${trend ? trend : 'N/A'} du prix du ${crypto}.</strong>`,
+        `${trendEmoji(percentChange)} <strong>${trend ? trend : 'N/A'} du prix du ${crypto}.</strong>`,
         `Au cours des 5 dernières minutes`,
         `Valeur la plus haute: ${highestCryptoPrice.toFixed(2)}$.`,
         `Valeur la plus basse: ${lowestCryptoPrice.toFixed(2)}$.`,
@@ -109,8 +112,7 @@ function computePercentageVariation(arrayOfPrices) {
 
 async function retreiveCryptoPrices(sendMessageCallback) {
     try {
-        const coins = ['bitcoin', 'ethereum', 'cardano', 'vechain', 'The Graph', 'Internet Computer', 'solana', 'apecoin', 'NEAR Protocol'];
-        const data = await Promise.all(coins.map(coin => dbRequestLastprices(coin, NB_OF_API_REQUESTS_PER_SECOND * 5)));
+        const data = await Promise.all(portfolio.map(coin => dbRequestLastprices(coin, NB_OF_API_REQUESTS_PER_SECOND * 5)));
         let message = ''
         let valueOwned = 0
         const allValuesOwned = []
@@ -118,10 +120,10 @@ async function retreiveCryptoPrices(sendMessageCallback) {
         await Promise.all(data.map(async (pricesData, index) => {
             const prices = pricesData.map(item => item.price);
             const percentChange = computePercentageVariation(prices).toFixed(2);
-            const coinQuantity = await getQuantities(coins[index]);
+            const coinQuantity = await getQuantities(portfolio[index]);
             valueOwned = Number(coinQuantity[0].quantity) * Number(prices[0]);
             allValuesOwned.push(valueOwned);
-            message += `<strong>${coins[index]}</strong>: ${Number(prices[0]).toFixed(2)}$ (${percentChange}%, ${valueOwned.toFixed(2)}$)\n`;
+            message += `${trendEmoji(percentChange)} <strong>${portfolio[index]}</strong>: ${Number(prices[0]).toFixed(2)}$ (${percentChange}%, ${valueOwned.toFixed(2)}$)\n`;
         }));
 
         const totalValueOwned = allValuesOwned.reduce((a, b) => a + b, 0)
@@ -207,5 +209,6 @@ module.exports = {
     setAlertThreshold,
     retreiveCryptoPrices,
     getAlertThresholdShitcoin,
-    setAlertThresholdShitcoin
+    setAlertThresholdShitcoin,
+    trendEmoji,
 }
