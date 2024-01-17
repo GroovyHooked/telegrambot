@@ -1,23 +1,7 @@
 const sqlite3 = require('sqlite3').verbose();
+
 let sql;
-// const { axiosInstance } = require('../controller/lib/axios.js');
-
-// const data = {
-//     callback_query: {
-//       id: '1622615205',
-//       data: 'Some data',
-//     },
-//   };
-
-// axiosInstance.answerCallbackQuery(data)
-// .then(response => {
-//   console.log(response.data); // Handle the response
-// })
-// .catch(error => {
-//   console.error(error); // Handle any errors
-// });
-
-const requestsPerMinute = 1;
+const requestsPerMinute = 4;
 
 const db = new sqlite3.Database('./database/database.db', (err) => {
     if (err) {
@@ -106,7 +90,7 @@ function dbRequestLastprice(name) {
 
 function getQuantities(coin) {
     return new Promise((resolve, reject) => {
-        sql = `SELECT quantity FROM crypto_quantity WHERE name = '${coin}'`;
+        sql = `SELECT quantity, short_name FROM crypto_quantity WHERE name = '${coin}'`;
         db.all(sql, (err, rows) => {
             if (err) {
                 console.error(err.message);
@@ -146,7 +130,7 @@ function setNB_OF_MESSAGES_TO_KEEP(value) {
     });
 }
 
-function getAlertThresholdShitcoinDb() {
+async function getAlertThresholdShitcoinDb() {
     return new Promise((resolve, reject) => {
         sql = `SELECT value FROM various WHERE name = 'ALERT_THRESHOLD_SHITCOIN'`;
         db.all(sql, (err, rows) => {
@@ -174,7 +158,7 @@ function setAlertThresholdShitcoinDb(value) {
     });
 }
 
-function getAlertThresholdDb() {
+async function getAlertThresholdDb() {
     return new Promise((resolve, reject) => {
         sql = `SELECT value FROM various WHERE name = 'ALERT_THRESHOLD'`;
         db.all(sql, (err, rows) => {
@@ -202,6 +186,35 @@ function setAlertThresholdDb(value) {
     });
 }
 
+function dbUpdateExchangeRate(value) {
+    return new Promise((resolve, reject) => {
+        sql = `UPDATE various SET value = '${value}' WHERE name = 'EXCHANGE_RATE_USD_TO_EUR'`;
+        db.run(sql, (err) => {
+            if (err) {
+                console.error(err.message);
+                reject(err);
+            } else {
+                resolve();
+            }
+        });
+    });
+}
+
+async function dbGetExchangeRate() {
+    return new Promise((resolve, reject) => {
+        sql = `SELECT value FROM various WHERE name = 'EXCHANGE_RATE_USD_TO_EUR'`;
+        db.all(sql, (err, rows) => {
+            if (err) {
+                console.error(err.message);
+                reject(err);
+            } else {
+                resolve(rows);
+            }
+        });
+    });
+}
+
+// TODO: prefix all functions with db
 module.exports = {
     insertCryptoData,
     dbRequestLastprices,
@@ -213,6 +226,8 @@ module.exports = {
     setAlertThresholdShitcoinDb,
     getAlertThresholdDb,
     setAlertThresholdDb,
+    dbUpdateExchangeRate,
+    dbGetExchangeRate,
 }
 
 // DELETE FROM crypto WHERE timestamp < (SELECT MAX(timestamp) FROM crypto) - (24 * 60 * 60 * 1000);
@@ -245,7 +260,7 @@ module.exports = {
 
 // sql = `INSERT INTO various (name, value) VALUES (?, ?)`;
 
-// db.run(sql, ['ALERT_THRESHOLD_SHITCOIN', 2], (err) => {
+// db.run(sql, ['EXCHANGE_RATE', 0], (err) => {
 //     if (err) {
 //         console.error(err.message);
 //         return;
@@ -259,12 +274,16 @@ module.exports = {
 
 // modify bitcoin quantity in crypto_quantity table
 // sql = `UPDATE crypto_quantity SET quantity = 0.0 WHERE name = 'bitcoin'`;
+
+
+// Query to get all entries from crypto tables, change timestamp to date format hh:mm, group by new format time hh:mm and delete entries when group by > 4 * 9
+// SELECT strftime('%H:%M', datetime(timestamp/1000, 'unixepoch')) as time, price, volume FROM crypto GROUP BY time HAVING COUNT(*) > 4 * 9 ORDER BY time DESC
+
+//sql = `ALTER TABLE crypto_quantity ADD COLUMN short_name TEXT`;
+// sql = `UPDATE crypto_quantity SET short_name = 'SOL' WHERE name = 'solana'`;
 // db.run(sql, (err) => {
 //     if (err) {
 //         console.error(err.message);
 //     }
-//     console.log('Updated crypto quantity.');
+//     console.log('table altered.');
 // })
-
-// Query to get all entries from crypto tables, change timestamp to date format hh:mm, group by new format time hh:mm and delete entries when group by > 4 * 9
-// SELECT strftime('%H:%M', datetime(timestamp/1000, 'unixepoch')) as time, price, volume FROM crypto GROUP BY time HAVING COUNT(*) > 4 * 9 ORDER BY time DESC

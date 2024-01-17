@@ -205,18 +205,10 @@ async function handleCommands(content, messageObj) {
             return true
         // CURRENCY
         case '/getchange':
-            const message = await exchangeInstance.getExchangeRate();
+            const message = await exchangeInstance.getExchangeRateString();
             axiosInstance.respondToUser(messageObj, message);
             return true
-        // case '/graph5minutes':
-        //     await createNumericCurveWithAxes(crypto.btcLast5Prices)
-        //     axiosInstance.sendPicture(imageUrl, process.env.CHAT_ID);
-        //     return true
-        // case '/graph1hour':
-        //     await createNumericCurveWithAxes(crypto.btcLastHourPrices)
-        //     axiosInstance.sendPicture(imageUrl, process.env.CHAT_ID);
-        //     return true
-
+        
         default:
             return false
     }

@@ -25,13 +25,32 @@ function exchangeInstance() {
                 return error.message;
             }
         },
-        async getExchangeRate() {
+        async getExchangeRateString() {
             const temp = params.amount;
             params.amount = 1;
             try {
                 const response = await axios.get(API_URL, { params });
                 params.amount = temp;
                 return exchangeRateFor1(response.data);
+            } catch (error) {
+                console.error(error.message);
+                return error.message;
+            }
+        },
+        async getExchangeRateValue() {
+            const temp = params.amount;
+            params.amount = 1;
+            params.from = 'USD';
+            params.to = 'EUR';
+            try {
+                const response = await axios.get(API_URL, { params });
+                // resetting params
+                params.amount = temp;
+                params.from = 'EUR';
+                params.to = 'USD';
+                const { rates } = response.data;
+                const { rate } = rates.EUR;
+                return rate
             } catch (error) {
                 console.error(error.message);
                 return error.message;
@@ -57,6 +76,7 @@ function exchangeInstance() {
             try {
                 const response = await axios.get(API_URL, { params });
                 params.amount = temp;
+                // resetting params
                 params.from = 'EUR';
                 params.to = 'USD';
                 return convertValueInEur(response.data);
