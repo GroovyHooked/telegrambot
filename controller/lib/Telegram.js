@@ -188,8 +188,7 @@ async function handleCommands(content, messageObj) {
             modifyAlertThreshold(messageObj, 3, crypto.getAlertThresholdShitcoin, crypto.setAlertThresholdShitcoin)
             return true
         case '/getpercentchange5mn':
-            const { percentChange, minutes, coin } = await crypto.getPercentChange5mn('bitcoin');
-            axiosInstance.respondToUser(messageObj, `Le taux de variation du ${coin} sur ${minutes} minutes est de ${percentChange}%.`);
+            await getPercentChangePerMinutesForAllCoins(5, messageObj)
             return true
         case '/getpercentchange1h':
             await getPercentChangePerMinutesForAllCoins(60, messageObj)
@@ -224,7 +223,7 @@ async function getPercentChangePerMinutesForAllCoins(minutes, messageObj) {
     let messageString = '';
     for (const coin of variables.portfolio) {
         const { percentChange, time } = await crypto.getPercentChangePerMinutes(coin, minutes);
-        messageString += `${crypto.trendEmoji(percentChange)} <strong>${coin}</strong> ${time / 60} heure(s): <strong>${percentChange}%</strong>\n`;
+        messageString += `${crypto.trendEmoji(percentChange)} <strong>${coin}</strong> ${minutes === 5 ? '5' : time / 60} ${minutes === 5 ? 'minutes' : 'heure(s)'}: <strong>${percentChange}%</strong>\n`;
     }
     axiosInstance.respondToUser(messageObj, messageString);
 }
@@ -294,6 +293,7 @@ async function handleSpecialCommands(content, messageObj) {
         const time = content.split('=')[1];
         const timeNumber = Number(time);
         if (timeNumber) {
+            // TODO: getPercentChangePerMinutes should take 2 parameters
             const { percentChange, minutes } = crypto.getPercentChangePerMinutes(timeNumber);
             axiosInstance.respondToUser(messageObj, `Le taux de variation sur ${minutes} minutes est de ${percentChange}%.`);
             return true

@@ -158,7 +158,7 @@ function setAlertThresholdShitcoinDb(value) {
     });
 }
 
-async function getAlertThresholdDb() {
+function getAlertThresholdDb() {
     return new Promise((resolve, reject) => {
         sql = `SELECT value FROM various WHERE name = 'ALERT_THRESHOLD'`;
         db.all(sql, (err, rows) => {
@@ -200,7 +200,7 @@ function dbUpdateExchangeRate(value) {
     });
 }
 
-async function dbGetExchangeRate() {
+function dbGetExchangeRate() {
     return new Promise((resolve, reject) => {
         sql = `SELECT value FROM various WHERE name = 'EXCHANGE_RATE_USD_TO_EUR'`;
         db.all(sql, (err, rows) => {

@@ -24,9 +24,8 @@ cron.schedule('0 * * * *', async () => {
 });
 
 cron.schedule('*/15 * * * * *', async () => {
-    fetchCryptoData().then(data => {
-        populateCryptoDataAndHandleResult(data, axiosInstance.sendToGroovy)
-    })
+    const data = await fetchCryptoData()
+    populateCryptoDataAndHandleResult(data, axiosInstance.sendToGroovy)
 });
 
 
@@ -140,12 +139,11 @@ async function retreiveCryptoPrices(sendMessageCallback) {
 
 const getPercentChange5mn = async (coin) => {
     let prices
-    await dbRequestLastprices(coin, NB_OF_API_REQUESTS_PER_SECOND * 5).then(data => {
-        data.forEach(element => {
-            element.timestamp = new Date(element.timestamp).toLocaleString().slice(12, 17);
-        });
-        prices = data.map(item => item.price);
-    })
+    const data = await dbRequestLastprices(coin, NB_OF_API_REQUESTS_PER_SECOND * 5)
+    data.forEach(element => {
+        element.timestamp = new Date(element.timestamp).toLocaleString().slice(12, 17);
+    });
+    prices = data.map(item => item.price);
     if (!prices) return axiosInstance.sendToGroovy('Le tableau "prices" est vide. (function getPercentChange5mn)')
     const percentChange = computePercentageVariation(prices).toFixed(2)
     return {
@@ -156,13 +154,12 @@ const getPercentChange5mn = async (coin) => {
 };
 
 const getPercentChangePerMinutes = async (coin, minutes) => {
-    let prices
-    await dbRequestLastprices(coin, minutes * 4).then(data => {
-        data.forEach(element => {
-            element.timestamp = new Date(element.timestamp).toLocaleString().slice(12, 17);
-        });
-        prices = data.map(item => item.price);
-    })
+    let prices = []
+    const data = await dbRequestLastprices(coin, minutes * 4)
+    for (const [key, value] of Object.entries(data)) {
+        value.timestamp = new Date(value.timestamp).toLocaleString().slice(12, 17);
+        prices.push(value.price)
+    }
     if (!prices) return axiosInstance.sendToGroovy('Le tableau "prices" est vide. (function getPercentChangePerMinutes)')
     const percentChange = computePercentageVariation(prices).toFixed(2)
     return {
@@ -172,24 +169,14 @@ const getPercentChangePerMinutes = async (coin, minutes) => {
 };
 
 const getAlertThreshold = async () => {
-    await getAlertThresholdDb().then(data => {
-        if (typeof data.data === 'object') {
-            alertThreshold = Number(data.value)
-        } else {
-            alertThreshold = Number(data[0].value)
-        }
-    })
+    const [{ value },] = await getAlertThresholdDb()
+    alertThreshold = Number(value)
     return alertThreshold
 };
 
 const getAlertThresholdShitcoin = async () => {
-    await getAlertThresholdShitcoinDb().then(data => {
-        if (typeof data.data === 'object') {
-            alertThresholdShitcoin = Number(data.value)
-        } else {
-            alertThresholdShitcoin = Number(data[0].value)
-        }
-    })
+    const [{ value },] = await getAlertThresholdShitcoinDb()
+    alertThresholdShitcoin = Number(value)
     return alertThresholdShitcoin
 };
 
