@@ -1,7 +1,6 @@
 require("dotenv").config();
 
-const sendMessagetoGpt = async (messages, model, temperature = 0, max_tokens = 500) => {
-    //console.log({ messages, model, temperature, max_tokens })
+const fetchOpenAI = async (messages, model, temperature = 0, max_tokens = 500) => {
     try {
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
@@ -17,7 +16,6 @@ const sendMessagetoGpt = async (messages, model, temperature = 0, max_tokens = 5
             }),
         });
         const data = await response.json();
-        //console.log({ data });
         const text = data.choices[0].message.content;
         return text;
     } catch (error) {
@@ -27,4 +25,4 @@ const sendMessagetoGpt = async (messages, model, temperature = 0, max_tokens = 5
 };
 
 
-module.exports = { sendMessagetoGpt };
+module.exports = { fetchOpenAI };

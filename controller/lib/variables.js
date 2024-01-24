@@ -11,7 +11,7 @@ const availableCommands = [
     '/setlimit',
     '/getmessages',
     '/getprice',
-    '/getpercentchange5mn',
+    '/getpercentchange10mn',
     '/getpercentchange1h',
     '/getpercentchange2h',
     '/getpercentchange3h',
@@ -34,7 +34,7 @@ const availableCommandsGPT = [
 
 const availableCommandsCrypto = [
     '/getprice',
-    '/getpercentchange5mn',
+    '/getpercentchange10mn',
     '/getpercentchange1h',
     '/getpercentchange2h',
     '/getpercentchange3h',
@@ -45,7 +45,7 @@ const availableCommandsCrypto = [
     '/setrateshitcoin',
 ];
 
-const availableCommandsVarious = [
+const availableCommandsHelp = [
     '/help',
     '/menu',
 ];
@@ -54,16 +54,12 @@ const availableCommandsCurrency = [
     '/getchange',
 ];
 
-const availableCommandsInProgress = [
-    '/graph5minutes',
-    '/graph1hour',
-];
 
 const menuOptions = [
     [{ text: '@Modèle', callback_data: 'choix1' }],
     [{ text: '@Crypto', callback_data: 'choix2' }],
     [{ text: '@Currency', callback_data: 'choix3' }],
-    [{ text: '@Various', callback_data: 'choix4' }],
+    [{ text: '@Help', callback_data: 'choix4' }],
     [{ text: '@In Progress', callback_data: 'choix5' }],
 ];
 
@@ -74,7 +70,7 @@ const messages = [
     { role: "system", content: "Vous pouvez taper /clear pour effacer les messages en mémoire." },
     { role: "system", content: "Vous pouvez taper /getprice pour voir le prix du Bitcoin." },
     { role: "system", content: "Vous pouvez taper /getchange pour voir le taux de change." },
-    { role: "system", content: "Vous pouvez taper /getpercentchange5mn pour voir le taux de variation sur 5 minutes." },
+    { role: "system", content: "Vous pouvez taper /getpercentchange10mn pour voir le taux de variation sur 10 minutes." },
     { role: "system", content: "Vous pouvez taper /getpercentchange1h pour voir le taux de variation sur 1 heure." },
     { role: "system", content: "Vous pouvez taper /getpercentchange2h pour voir le taux de variation sur 2 heures." },
     { role: "system", content: "Vous pouvez taper /getpercentchange3h pour voir le taux de variation sur 3 heures." },
@@ -130,8 +126,7 @@ module.exports = {
     menuOptions,
     availableCommandsGPT,
     availableCommandsCrypto,
-    availableCommandsVarious,
+    availableCommandsHelp,
     availableCommandsCurrency,
-    availableCommandsInProgress,
     portfolio,
 }

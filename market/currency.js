@@ -31,7 +31,7 @@ function exchangeInstance() {
             try {
                 const response = await axios.get(API_URL, { params });
                 params.amount = temp;
-                return exchangeRateFor1(response.data);
+                return exchangeRateEurToUsd(response.data, 1);
             } catch (error) {
                 console.error(error.message);
                 return error.message;
@@ -62,50 +62,21 @@ function exchangeInstance() {
             try {
                 const response = await axios.get(API_URL, { params });
                 params.amount = temp;
-                return exchangeRateInUsd(response.data, amount);
+                return exchangeRateEurToUsd(response.data, amount);
             } catch (error) {
                 console.error(error.message);
                 return error.message;
             }
         },
-        async convertToEuro(amount) {
-            const temp = params.amount;
-            params.amount = amount;
-            params.from = 'USD';
-            params.to = 'EUR';
-            try {
-                const response = await axios.get(API_URL, { params });
-                params.amount = temp;
-                // resetting params
-                params.from = 'EUR';
-                params.to = 'USD';
-                return convertValueInEur(response.data);
-            } catch (error) {
-                console.error(error.message);
-                return error;
-            }
-        }
     }
 }
 
-function exchangeRateFor1(response) {
-    const { base_currency_code, rates } = response;
-    const { currency_name, rate } = rates.USD;
-    const message = `1 ${base_currency_code} = ${rate} ${currency_name}`;
-    return message;
-}
 
-function exchangeRateInUsd(response, amount) {
+function exchangeRateEurToUsd(response, amount) {
     const { base_currency_code, rates } = response;
     const { rate_for_amount } = rates.USD;
     const message = `${amount}${base_currency_code} = ${Number(rate_for_amount).toFixed(2)}USD`;
     return message;
-}
-
-function convertValueInEur(response) {
-    const { rates } = response;
-    const { rate_for_amount } = rates.EUR;
-    return rate_for_amount;
 }
 
 

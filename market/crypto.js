@@ -2,21 +2,23 @@ require('dotenv').config();
 const cron = require('node-cron');
 
 const { axiosInstance } = require("../controller/lib/axios.js");
-const { insertCryptoData,
+const { 
+    insertCryptoData,
     dbRequestLastprices,
-    dbGetExchangeRate,
-    getQuantities,
-    getAlertThresholdShitcoinDb,
-    setAlertThresholdShitcoinDb,
-    getAlertThresholdDb,
-    setAlertThresholdDb,
-    dbUpdateExchangeRate } = require("../database/database.js");
+    dbRequestExchangeRate,
+    dbRequestQuantities,
+    dbRequestAlertThresholdShitcoinDb,
+    dbSetAlertThresholdShitcoinDb,
+    dbRequestAlertThresholdDb,
+    dbSetAlertThresholdDb,
+    dbUpdateExchangeRate 
+} = require("../database/database.js");
 const { exchangeInstance } = require("./currency.js");
 const { portfolio } = require("../controller/lib/variables.js");
 
-let alertThreshold; // Percentage change to trigger an alert  ALERT_THRESHOLD
-let alertThresholdShitcoin; // Percentage change to trigger an alert ALERT_THRESHOLD_SHITCOIN
-const NB_OF_API_REQUESTS_PER_SECOND = 4;
+let alertThreshold; 
+let alertThresholdShitcoin; 
+const NB_OF_API_REQUESTS_PER_MINUTE = 4;
 
 cron.schedule('0 * * * *', async () => {
     const rate = await exchangeInstance.getExchangeRateValue();
@@ -31,7 +33,7 @@ cron.schedule('*/15 * * * * *', async () => {
 
 async function fetchCryptoData() {
     try {
-        const data = await axiosInstance.fetchDataFromModulaApiMultiCoins()
+        const data = await axiosInstance.fetchDataFromModulaApi()
         if (!data) {
             axiosInstance.sendToGroovy('Aucune donnée disponible pour le moment.')
         } else {
@@ -59,14 +61,14 @@ function populateCryptoDataAndHandleResult(cryptoObjet, sendMessageCallback) {
 }
 
 async function handleCryptoPrice(sendMessageCallback) {
-    const [data1,] = await getAlertThresholdDb()
+    const [data1,] = await dbRequestAlertThresholdDb()
     alertThreshold = Number(data1.value)
 
-    const [data2,] = await getAlertThresholdShitcoinDb()
+    const [data2,] = await dbRequestAlertThresholdShitcoinDb()
     alertThresholdShitcoin = Number(data2.value)
 
     portfolio.forEach(async crypto => {
-        const data = await dbRequestLastprices(crypto, NB_OF_API_REQUESTS_PER_SECOND * 5)
+        const data = await dbRequestLastprices(crypto, NB_OF_API_REQUESTS_PER_MINUTE * 10)
         data.forEach(element => {
             element.timestamp = new Date(element.timestamp).toLocaleString().slice(12, 17);
         });
@@ -89,7 +91,7 @@ function sendAlertMessage(crypto, percentChange, prices, sendMessageCallback) {
     const trend = Math.sign(percentChange) === 0 ? 'Neutre' : Math.sign(percentChange) === 1 ? 'Augmentaion' : 'Baisse';
     const tempMessage = [
         `${trendEmoji(percentChange)} <strong>${trend ? trend : 'N/A'} du prix du ${crypto}.</strong>`,
-        `Au cours des 5 dernières minutes`,
+        `Au cours des 10 dernières minutes`,
         `Valeur la plus haute: ${highestCryptoPrice.toFixed(2)}$.`,
         `Valeur la plus basse: ${lowestCryptoPrice.toFixed(2)}$.`,
         `Diff: ${(highestCryptoPrice - lowestCryptoPrice).toFixed(2)}$.`,
@@ -108,9 +110,9 @@ function computePercentageVariation(arrayOfPrices) {
 
 async function retreiveCryptoPrices(sendMessageCallback) {
     try {
-        let [exchangeRate,] = await dbGetExchangeRate();
+        let [exchangeRate,] = await dbRequestExchangeRate();
         exchangeRate = Number(exchangeRate.value);
-        const data = await Promise.all(portfolio.map(coin => dbRequestLastprices(coin, NB_OF_API_REQUESTS_PER_SECOND * 5)));
+        const data = await Promise.all(portfolio.map(coin => dbRequestLastprices(coin, NB_OF_API_REQUESTS_PER_MINUTE * 10)));
         let message = ''
         let valueOwned = 0
         const allValuesOwned = []
@@ -118,10 +120,9 @@ async function retreiveCryptoPrices(sendMessageCallback) {
         await Promise.all(data.map(async (pricesData, index) => {
             const prices = pricesData.map(item => item.price);
             const percentChange = computePercentageVariation(prices).toFixed(2);
-            const [coinQuantity,] = await getQuantities(portfolio[index]);
+            const [coinQuantity,] = await dbRequestQuantities(portfolio[index]);
             valueOwned = Number(coinQuantity.quantity) * Number(prices[0]);
             allValuesOwned.push(valueOwned);
-            // change to uppercase the first letter of the coin name
             message += `${trendEmoji(percentChange)} <strong>${coinQuantity.short_name}</strong>: ${(Number(prices[0]) * exchangeRate).toFixed(2)}€ (${percentChange}%, ${(valueOwned * exchangeRate).toFixed(2)}€)\n`;
         }));
         const totalValueOwned = allValuesOwned.reduce((a, b) => a + b, 0)
@@ -137,26 +138,10 @@ async function retreiveCryptoPrices(sendMessageCallback) {
     }
 }
 
-const getPercentChange5mn = async (coin) => {
-    let prices
-    const data = await dbRequestLastprices(coin, NB_OF_API_REQUESTS_PER_SECOND * 5)
-    data.forEach(element => {
-        element.timestamp = new Date(element.timestamp).toLocaleString().slice(12, 17);
-    });
-    prices = data.map(item => item.price);
-    if (!prices) return axiosInstance.sendToGroovy('Le tableau "prices" est vide. (function getPercentChange5mn)')
-    const percentChange = computePercentageVariation(prices).toFixed(2)
-    return {
-        percentChange,
-        minutes: prices.length,
-        coin
-    }
-};
-
 const getPercentChangePerMinutes = async (coin, minutes) => {
     let prices = []
-    const data = await dbRequestLastprices(coin, minutes * 4)
-    for (const [key, value] of Object.entries(data)) {
+    const data = await dbRequestLastprices(coin, NB_OF_API_REQUESTS_PER_MINUTE * minutes)
+    for (const [, value] of Object.entries(data)) {
         value.timestamp = new Date(value.timestamp).toLocaleString().slice(12, 17);
         prices.push(value.price)
     }
@@ -169,27 +154,26 @@ const getPercentChangePerMinutes = async (coin, minutes) => {
 };
 
 const getAlertThreshold = async () => {
-    const [{ value },] = await getAlertThresholdDb()
+    const [{ value },] = await dbRequestAlertThresholdDb()
     alertThreshold = Number(value)
     return alertThreshold
 };
 
 const getAlertThresholdShitcoin = async () => {
-    const [{ value },] = await getAlertThresholdShitcoinDb()
+    const [{ value },] = await dbRequestAlertThresholdShitcoinDb()
     alertThresholdShitcoin = Number(value)
     return alertThresholdShitcoin
 };
 
 const setAlertThreshold = async (newThreshold) => {
-    await setAlertThresholdDb(newThreshold)
+    await dbSetAlertThresholdDb(newThreshold)
 }
 
 const setAlertThresholdShitcoin = async (newThreshold) => {
-    await setAlertThresholdShitcoinDb(newThreshold)
+    await dbSetAlertThresholdShitcoinDb(newThreshold)
 }
 
 module.exports = {
-    getPercentChange5mn,
     getPercentChangePerMinutes,
     getAlertThreshold,
     setAlertThreshold,
