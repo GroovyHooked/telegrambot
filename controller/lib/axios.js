@@ -54,7 +54,7 @@ function getAxiosInstance() {
             })
             return data
         } catch (error) {
-            sendToGroovy(`fetchDataFromModulaApi data: ${error}`)
+            sendToGroovy(`Error in axios.js/fetchDataFromModulaApi: ${error}`)
         }
     }
 

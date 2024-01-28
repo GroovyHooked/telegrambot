@@ -46,7 +46,7 @@ async function fetchCryptoData() {
 }
 
 function populateCryptoDataAndHandleResult(cryptoObjet, sendMessageCallback) {
-    if (!cryptoObjet) return sendMessageCallback('Aucune donnée disponible dans l\'objet cryptoObjet')
+    if (!cryptoObjet) return sendMessageCallback('crypto.js/populateCryptoDataAndHandleResult: Aucune donnée récupérée depuis l\'API.')
     insertCryptoData(cryptoObjet.data['bitcoin'], 'bitcoin')
     insertCryptoData(cryptoObjet.data['ethereum'], 'ethereum')
     insertCryptoData(cryptoObjet.data['cardano'], 'cardano')
