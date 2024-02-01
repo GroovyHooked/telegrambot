@@ -1,8 +1,8 @@
-const { createCanvas, loadImage } = require("canvas");
+const { createCanvas } = require("canvas");
 const fs = require("fs");
 const path = require("path");
 
-async function createNumericCurveWithAxes(values) {
+async function createNumericCurveWithAxes(values, assetName) {
     // Make a 500x400 canvas
     const canvas = createCanvas(500, 400);
     //const canvas = createCanvas(500, 200);
@@ -13,12 +13,12 @@ async function createNumericCurveWithAxes(values) {
     ctx.fillRect(0, 0, 500, 400);
 
     // Set line color and width
-    ctx.strokeStyle = "#3498db";
+    ctx.strokeStyle = "#1B3065";
     ctx.lineWidth = 2;
 
     // Increased padding values
-    const paddingLeft = 70;
-    const paddingRight = 70;
+    const paddingLeft = 10;
+    const paddingRight = 10;
 
 
 
@@ -37,12 +37,11 @@ async function createNumericCurveWithAxes(values) {
     const points = values.map((value, index) => {
         const x =
             paddingLeft +
-            ((500 - paddingLeft - paddingRight) / (values.length - 1)) * index;
-        const y = verticalShift + (1 - (value.price - minPrice) / yNormalizationFactor) * yScale; // Ajuster la normalisation et ajouter la translation
+            ((500 - paddingLeft - paddingRight) / (values.length - 1)) * (values.length - 1 - index); // Change here
+        const y = verticalShift + (1 - (value.price - minPrice) / yNormalizationFactor) * yScale;
 
         return { x, y };
     });
-
 
     // Draw the curve
     ctx.beginPath();
@@ -53,25 +52,28 @@ async function createNumericCurveWithAxes(values) {
             ctx.lineTo(points[index].x, points[index].y);
         }
     });
-
     ctx.stroke();
 
+    // Reverse the array of timestamp values
+    const reversedTimestamps = values.map((value) => value.timestamp).reverse();
+
     // Draw x-axis label (time)
-    ctx.fillStyle = "#000000";
-    ctx.font = "10px sans-serif"; // Smaller font size
-    values.forEach((_, index) => {
-        const time = values[index].time;
+    ctx.fillStyle = "#1B3065";
+    ctx.font = "12px sans-serif"; // Smaller font size
+
+    reversedTimestamps.forEach((time, index) => {
         const x =
             paddingLeft +
-            ((500 - paddingLeft - paddingRight) / (values.length - 1)) * index; // Adjust x-coordinate with padding
+            ((500 - paddingLeft - paddingRight) / (reversedTimestamps.length - 1)) * index; // Adjust x-coordinate with padding
+
         if (values.length <= 10) {
             ctx.fillText(`${time}`, x, 340); // Adjust y-coordinate to provide more space
         } else if (values.length > 10) {
-            let moduloValue = Number(values.length.toString().split("").shift());
+            let moduloValue = Number(reversedTimestamps.length.toString().split("").shift());
             if (index % moduloValue === 0) {
                 const minutes = time.split(":")[1];
                 ctx.fillText(
-                    `${index === 0 || index === values.length - 1 ? time : minutes}`,
+                    `${index === 0 || index === reversedTimestamps.length - 1 ? time : minutes}`,
                     x,
                     340
                 ); // Adjust y-coordinate to provide more space
@@ -79,27 +81,28 @@ async function createNumericCurveWithAxes(values) {
         }
     });
 
+
     // Draw highest value label
-    ctx.fillText(`Max: ${maxPrice}`, 500 - paddingRight, 50);
+    ctx.fillText(`Max: ${maxPrice.toFixed(2)}`, 250 - paddingRight, 50);
 
     // Draw lowest value label
-    ctx.fillText(`Min: ${minPrice}`, 500 - paddingRight, 350);
+    ctx.fillText(`Min: ${minPrice.toFixed(2)}`, 350 - paddingRight, 50);
 
     // Draw date in top-right corner
-    const currentDate = new Date();
-    const formattedDate = `${currentDate.getDate()}/${currentDate.getMonth() + 1
-        }/${currentDate.getFullYear()}`;
-    ctx.fillText(formattedDate, 450, 20);
+    // const currentDate = new Date();
+    // const formattedDate = `${currentDate.getDate()}/${currentDate.getMonth() + 1
+    //     }/${currentDate.getFullYear()}`;
+    // ctx.fillText(formattedDate, 400, 20);
 
     // Save the canvas to a file
-    const outputPath = path.join(__dirname, "graph.png");
+    const outputPath = path.join(`/var/www/telegramBot/front/img/${assetName}.png`);
     const out = fs.createWriteStream(outputPath);
     const stream = canvas.createPNGStream();
     stream.pipe(out);
 
-    out.on("finish", () => {
-        console.log(`Curve image with axes created and saved as ${outputPath}`);
-    });
+    // out.on("finish", () => {
+    //     console.log(`Curve image with axes created and saved as ${outputPath}`);
+    // });
 
     return outputPath;
 }
