@@ -1,10 +1,10 @@
 require('dotenv').config();
 
 const { axiosInstance } = require("./axios");
-const { fetchOpenAI } = require("../../chatGPT/communication.js");
+const { fetchOpenAI } = require("../../llm/communication.js");
 const crypto = require("../../market/crypto.js");
 const variables = require("./variables.js");
-const { exchangeInstance } = require("../../market/currency.js");
+const { exchangeInstance } = require("../../market/fiat.js");
 const { dbRequestNbOfMessagesToKeep, dbSetNbOfMessagesToKeep } = require("../../database/database.js");
 let MODEL = "gpt-3.5-turbo";
 let NB_OF_MESSAGES_TO_KEEP

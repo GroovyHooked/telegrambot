@@ -13,7 +13,7 @@ const {
     dbSetAlertThresholdDb,
     dbUpdateExchangeRate 
 } = require("../database/database.js");
-const { exchangeInstance } = require("./currency.js");
+const { exchangeInstance } = require("./fiat.js");
 const { portfolio } = require("../controller/lib/variables.js");
 
 let alertThreshold; 
