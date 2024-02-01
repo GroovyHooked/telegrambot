@@ -1,0 +1,27 @@
+<%- include('generic/head') %>
+<body>
+<%- include('generic/header', { total }) %>
+<div class="container">
+    <div class="container-head">
+        <h1>Portfolio</h1>
+    </div>
+    <% values.forEach(value => { %>
+        <div class="row">
+            <div class="col">
+                <p><%= value.name %></p>
+            </div>
+            <div class="col">
+                <p><%= value.value %>€</p>
+            </div>
+        </div>
+    <% }); %>
+    <div class="row">
+        <div class="col">
+            <p>Total</p>
+        </div>
+        <div class="col">
+            <p><%= total %>€</p>
+        </div>
+    </div>
+</div>
+<%- include('generic/footer') %>

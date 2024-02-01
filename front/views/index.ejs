@@ -1,0 +1,52 @@
+<%- include('generic/head') %>
+
+  <body>
+    <%- include('generic/header', { total }) %>
+      <div class="container home-container">
+        <div class="container-head">
+          <h1>Home</h1>
+          <div class="asset-select-section text-center">
+            <label for="assets">Choose an asset:</label>
+            <!-- The select tag with options -->
+            <select id="assets" name="assets">
+              <option value="Bitcoin">Bitcoin</option>
+              <option value="Ethereum">Ethereum</option>
+              <option value="Solana">Solana</option>
+              <option value="Vechain">Vechain</option>
+              <option value="ICP">ICP</option>
+              <option value="NEAR">NEAR</option>
+              <option value="Apecoin">Apecoin</option>
+              <option value="Graph">Graph</option>
+            </select>
+          </div>
+        </div>
+        <div class="container img-container">
+          <img src="../img/bitcoin.png" class="img-fluid float-center" alt="graph" class="img-fluid" />
+        </div>
+        <div class="card-container">
+          <a class="card-link" href="http://192.168.1.111/home">
+            <div class="card home">
+              <p class="card-title">Home</p>
+              <i class="fa-solid fa-house fa-icon"></i>
+            </div>
+          </a>
+          <a class="card-link" href="http://192.168.1.111/portfolio">
+            <div class="card portfolio">
+              <p class="card-title">Portfolio</p>
+              <i class="fa-solid fa-briefcase fa-icon"></i>
+            </div>
+          </a>
+          <a class="card-link" href="http://192.168.1.111/quantities">
+            <div class="card quantities">
+              <p class="card-title">Quantities</p>
+              <i class="fa-solid fa-star fa-icon"></i>
+            </div>
+          </a>
+          <a class="card-link" href="http://192.168.1.111/quantities">
+            <div class="card quantities">
+              <p class="card-title">test</p>
+            </div>
+          </a>
+        </div>
+      </div>
+      <%- include('generic/footer') %>

@@ -1,0 +1,123 @@
+body {
+    margin: 0;
+    font-family: "Rubik", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 400;
+    font-style: normal;
+    font-size: 16px;
+    color: #1B3065;
+}
+
+.header {
+    background-color: #1B3065;
+    color: white;
+    padding: 10px;
+    height: 124px;
+    margin-bottom: 20px;
+}
+
+.header-container {
+    height: 110px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.p-value {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 10px;
+}
+
+.p-value > p {
+    margin-bottom: 0;
+}
+
+.p-value > p {
+    font-size: 20px;
+}
+
+.dropdown {
+    align-self: center;
+}
+
+.btn-dropdown {
+    background-color: #1B3065;
+    color: white;
+    border: 1px solid white;
+    border-radius: 5px;
+    padding: 5px 10px;
+    width: 80px;
+    font-size: 20px;
+}
+
+.hidden {
+    display: none;
+}
+
+.show {
+    display: block;
+    position: absolute;
+    padding: 6px 0;
+    background-color: #1B3065;
+    color: white;
+    list-style: none;
+    right: -10px;
+    width: 110px;
+    height: 140px;
+    font-size: 20px;
+    text-align: center;
+    line-height: 42px;
+    border-radius: 5px;
+    z-index: 1;
+}
+
+.container-head {
+    text-align: center;
+}
+
+.item {
+    color: inherit;
+    text-decoration: inherit;
+    padding: 5px 10px;
+}
+
+.card-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    margin: 0 auto;
+    padding: 0 10px;
+    position: relative;
+}
+
+.card {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #E9EDF8;
+    color: #1B3065;
+    border-radius: 5px;
+    padding: 10px;
+    margin: 5px;
+    height: 140px;
+}
+
+.card-link {
+    width: 50%;
+    display: block;
+    color: inherit;
+    text-decoration: inherit;
+}
+
+.card-title {
+    position: absolute;
+    z-index: 2;
+    left: 8px;
+    top: 4px;
+
+}
+.fa-icon {
+    transform: scale(4);
+}

@@ -82,6 +82,19 @@ function dbRequestLastprice(name) {
     });
 }
 
+function dbRequestLastpriceAll() {
+    return new Promise((resolve, reject) => {
+        sql = `SELECT price, name FROM crypto ORDER BY timestamp DESC LIMIT 9`;
+        db.all(sql, (err, rows) => {
+            if (err) {
+                console.error(err.message);
+                reject(err);
+            } else {
+                resolve(rows);
+            }
+        });
+    });
+}
 
 function dbRequestQuantities(coin) {
     return new Promise((resolve, reject) => {
@@ -92,6 +105,34 @@ function dbRequestQuantities(coin) {
                 reject(err);
             } else {
                 resolve(rows);
+            }
+        });
+    });
+}
+
+function dbRequestAllQuantities() {
+    return new Promise((resolve, reject) => {
+        sql = `SELECT quantity, name FROM crypto_quantity`;
+        db.all(sql, (err, rows) => {
+            if (err) {
+                console.error(err.message);
+                reject(err);
+            } else {
+                resolve(rows);
+            }
+        });
+    });
+}
+
+function dbUpdateQuantity(coin, quantity) {
+    return new Promise((resolve, reject) => {
+        sql = `UPDATE crypto_quantity SET quantity = '${quantity}' WHERE name = '${coin}'`;
+        db.run(sql, (err) => {
+            if (err) {
+                console.error(err.message);
+                reject(err);
+            } else {
+                resolve();
             }
         });
     });
@@ -213,7 +254,10 @@ module.exports = {
     insertCryptoData,
     dbRequestLastprices,
     dbRequestLastprice,
+    dbRequestLastpriceAll,
     dbRequestQuantities,
+    dbRequestAllQuantities,
+    dbUpdateQuantity,
     dbRequestNbOfMessagesToKeep,
     dbSetNbOfMessagesToKeep,
     dbRequestAlertThresholdShitcoinDb,
@@ -237,7 +281,6 @@ module.exports = {
 // sql = `INSERT INTO various (name, value) VALUES (?, ?)`;
 
 // modify bitcoin quantity in crypto_quantity table
-// sql = `UPDATE crypto_quantity SET quantity = 0.0 WHERE name = 'bitcoin'`;
 
 
 //sql = `ALTER TABLE crypto_quantity ADD COLUMN short_name TEXT`;
@@ -248,3 +291,15 @@ module.exports = {
 //     }
 //     console.log('table altered.');
 // })
+
+// sql = 'INSERT INTO crypto_quantity (name, quantity, timestamp, short_name) VALUES (?, ?, ?, ?)';
+
+// const date = new Date();
+// const timestamp = date.getTime();
+// db.run(sql, (err) => {
+//     if (err) {
+//         console.error(err.message);
+//         return;
+//     }
+//     console.log('Inserted crypto data.');
+// });
