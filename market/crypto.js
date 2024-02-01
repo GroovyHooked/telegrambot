@@ -15,7 +15,7 @@ const {
 } = require("../database/database.js");
 const { exchangeInstance } = require("./fiat.js");
 const { portfolio } = require("../controller/lib/variables.js");
-const { createNumericCurveWithAxes } = require("../charts/index.js");
+const { createNumericCurveWithAxes } = require("../chart/chart.js");
 
 let alertThreshold; 
 let alertThresholdShitcoin; 

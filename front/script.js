@@ -53,7 +53,6 @@ function requestGraphData(assetName) {
 }
 
 function updateGraphOnHomePage() {
-    console.log('update graph');
     const img = document.querySelector('.img-fluid')
     const timestamp = new Date().getTime();
     const imgSrc = `../img/bitcoin.png?timestamp=${timestamp}`;
