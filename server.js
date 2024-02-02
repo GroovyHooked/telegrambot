@@ -24,10 +24,9 @@ app.post('/updatequantities', async function (req, res) {
 })
 
 app.post('/graphdata', async function (req, res) {
-  console.log('/graphdata');
   const data = req.body
-  console.log({data});
-  res.sendStatus(200)
+  const asset = data.asset
+  res.json({ asset });
 })
 
 app.post("*", async (req, res) => {
@@ -40,10 +39,8 @@ app.get('/home', async function (req, res) {
 });
 
 app.get('/portfolio', async function (req, res) {
-  // setInterval(async () => {
     const { values, total } = await retreiveDataFromDb()
     res.render(__dirname + '/front/views/portfolio', { values, total });
-  // }, 15000)
 });
 
 app.get('/quantities', async function (req, res) {

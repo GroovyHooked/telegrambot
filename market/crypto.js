@@ -15,7 +15,7 @@ const {
 } = require("../database/database.js");
 const { exchangeInstance } = require("./fiat.js");
 const { portfolio } = require("../controller/lib/variables.js");
-const { createNumericCurveWithAxes } = require("../chart/chart.js");
+const { createChart } = require("../chart/chart.js");
 
 let alertThreshold; 
 let alertThresholdShitcoin; 
@@ -75,9 +75,9 @@ async function handleCryptoPrice(sendMessageCallback) {
         });
         const prices = data.map(item => item.price);
         const percentChange = computePercentageVariation(prices).toFixed(2);
-        if(crypto === 'bitcoin') {
-            createNumericCurveWithAxes(data, 'bitcoin')
-        }
+        
+        createChart(data, crypto)
+        
         if (crypto === 'bitcoin' && Math.abs(percentChange) >= alertThreshold || crypto === 'ethereum' && Math.abs(percentChange) >= alertThreshold) {
             sendAlertMessage(crypto, percentChange, prices, sendMessageCallback)
         } else if (Math.abs(percentChange) >= alertThresholdShitcoin) {

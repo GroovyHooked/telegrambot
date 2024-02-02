@@ -2,7 +2,7 @@ const { createCanvas } = require("canvas");
 const fs = require("fs");
 const path = require("path");
 
-async function createNumericCurveWithAxes(values, assetName) {
+async function createChart(values, assetName) {
     // Make a 500x400 canvas
     const canvas = createCanvas(500, 400);
     //const canvas = createCanvas(500, 200);
@@ -106,4 +106,4 @@ async function createNumericCurveWithAxes(values, assetName) {
 
     return outputPath;
 }
-module.exports = { createNumericCurveWithAxes };
+module.exports = { createChart };
