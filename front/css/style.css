@@ -72,11 +72,15 @@ body {
     z-index: 1;
 }
 
-.container-head {
+.container-title {
     text-align: center;
 }
 
-.item {
+.asset-select-section {
+    margin-left: 18px;
+}
+
+.dropdown-item {
     color: inherit;
     text-decoration: inherit;
     padding: 5px 10px;
