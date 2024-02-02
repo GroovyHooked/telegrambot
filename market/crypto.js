@@ -21,6 +21,8 @@ let alertThreshold;
 let alertThresholdShitcoin; 
 const NB_OF_API_REQUESTS_PER_MINUTE = 4;
 
+createChartsForAllCrypto()
+
 cron.schedule('0 * * * *', async () => {
     const rate = await exchangeInstance.getExchangeRateValue();
     await dbUpdateExchangeRate(rate);
@@ -59,6 +61,7 @@ function populateCryptoDataAndHandleResult(cryptoObjet, sendMessageCallback) {
     insertCryptoData(cryptoObjet.data['NEAR Protocol'], 'NEAR Protocol')
 
     handleCryptoPrice(sendMessageCallback)
+    createChartsForAllCrypto()
 }
 
 async function handleCryptoPrice(sendMessageCallback) {
@@ -70,19 +73,23 @@ async function handleCryptoPrice(sendMessageCallback) {
 
     portfolio.forEach(async crypto => {
         const data = await dbRequestLastprices(crypto, NB_OF_API_REQUESTS_PER_MINUTE * 10)
-        data.forEach(element => {
-            element.timestamp = new Date(element.timestamp).toLocaleString().slice(12, 17);
-        });
         const prices = data.map(item => item.price);
-        const percentChange = computePercentageVariation(prices).toFixed(2);
-        
-        createChart(data, crypto)
-        
+        const percentChange = computePercentageVariation(prices).toFixed(2);        
         if (crypto === 'bitcoin' && Math.abs(percentChange) >= alertThreshold || crypto === 'ethereum' && Math.abs(percentChange) >= alertThreshold) {
             sendAlertMessage(crypto, percentChange, prices, sendMessageCallback)
         } else if (Math.abs(percentChange) >= alertThresholdShitcoin) {
             sendAlertMessage(crypto, percentChange, prices, sendMessageCallback)
         }
+    })
+}
+
+async function createChartsForAllCrypto() {
+    portfolio.forEach(async crypto => {
+        const data = await dbRequestLastprices(crypto, NB_OF_API_REQUESTS_PER_MINUTE * 60)
+        data.forEach(element => {
+            element.timestamp = new Date(element.timestamp).toLocaleString().slice(12, 17);
+        });
+        createChart(data, crypto)
     })
 }
 

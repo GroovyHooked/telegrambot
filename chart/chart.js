@@ -22,18 +22,18 @@ async function createChart(values, assetName) {
 
 
 
-    // Trouver la plage totale des valeurs de prix
+    // Find the total range of price values
     const priceValues = values.map(value => value.price);
     const maxPrice = Math.max(...priceValues);
     const minPrice = Math.min(...priceValues);
     const yScale = 150;
 
-    // Calculer le facteur de normalisation en fonction de la plage totale
+    // Calculate normalization factor based on total range
     const yNormalizationFactor = maxPrice - minPrice;
 
-    const verticalShift = 100; // Ajustez cette valeur selon vos besoins
+    const verticalShift = 100;
 
-    // Utiliser le facteur de normalisation pour calculer les coordonnées Y avec une translation verticale
+    // Use the normalization factor to calculate Y coordinates with vertical translation
     const points = values.map((value, index) => {
         const x =
             paddingLeft +
@@ -59,50 +59,30 @@ async function createChart(values, assetName) {
 
     // Draw x-axis label (time)
     ctx.fillStyle = "#1B3065";
-    ctx.font = "12px sans-serif"; // Smaller font size
+    ctx.font = "14px sans-serif";
 
     reversedTimestamps.forEach((time, index) => {
         const x =
             paddingLeft +
             ((500 - paddingLeft - paddingRight) / (reversedTimestamps.length - 1)) * index; // Adjust x-coordinate with padding
 
-        if (values.length <= 10) {
+        let moduloValue = 40
+        if (index % moduloValue === 0) {
             ctx.fillText(`${time}`, x, 340); // Adjust y-coordinate to provide more space
-        } else if (values.length > 10) {
-            let moduloValue = Number(reversedTimestamps.length.toString().split("").shift());
-            if (index % moduloValue === 0) {
-                const minutes = time.split(":")[1];
-                ctx.fillText(
-                    `${index === 0 || index === reversedTimestamps.length - 1 ? time : minutes}`,
-                    x,
-                    340
-                ); // Adjust y-coordinate to provide more space
-            }
         }
     });
 
-
     // Draw highest value label
-    ctx.fillText(`Max: ${maxPrice.toFixed(2)}`, 250 - paddingRight, 50);
+    ctx.fillText(`Max: ${maxPrice.toFixed(2)}`, 240 - paddingRight, 50);
 
     // Draw lowest value label
-    ctx.fillText(`Min: ${minPrice.toFixed(2)}`, 350 - paddingRight, 50);
-
-    // Draw date in top-right corner
-    // const currentDate = new Date();
-    // const formattedDate = `${currentDate.getDate()}/${currentDate.getMonth() + 1
-    //     }/${currentDate.getFullYear()}`;
-    // ctx.fillText(formattedDate, 400, 20);
+    ctx.fillText(`Min: ${minPrice.toFixed(2)}`, 360 - paddingRight, 50);
 
     // Save the canvas to a file
     const outputPath = path.join(`/var/www/telegramBot/front/img/${assetName}.png`);
     const out = fs.createWriteStream(outputPath);
     const stream = canvas.createPNGStream();
     stream.pipe(out);
-
-    // out.on("finish", () => {
-    //     console.log(`Curve image with axes created and saved as ${outputPath}`);
-    // });
 
     return outputPath;
 }
