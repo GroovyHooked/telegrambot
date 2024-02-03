@@ -34,17 +34,17 @@ app.post("*", async (req, res) => {
 });
 
 app.get('/home', async function (req, res) {
-  const { total } = await retreiveDataFromDb()
+  const { total } = await retrieveDataFromDb()
   res.render(__dirname + '/front/views/index', { total });
 });
 
 app.get('/portfolio', async function (req, res) {
-    const { values, total } = await retreiveDataFromDb()
+    const { values, total } = await retrieveDataFromDb()
     res.render(__dirname + '/front/views/portfolio', { values, total });
 });
 
 app.get('/quantities', async function (req, res) {
-  const { total } = await retreiveDataFromDb()
+  const { total } = await retrieveDataFromDb()
   const data = await dbRequestAllQuantities()
   res.render(__dirname + '/front/views/quantities', { data, total });
 });
@@ -86,7 +86,7 @@ app.listen(PORT, '0.0.0.0', function (err) {
   console.log("Server listening on PORT", PORT);
 });
 
-async function retreiveDataFromDb() {
+async function retrieveDataFromDb() {
   const values = []
   let total = 0
   let liquidity = 0

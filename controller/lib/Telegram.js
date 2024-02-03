@@ -119,7 +119,7 @@ async function processCommands(content) {
 
         // CRYPTO
         case '/getprice':
-            crypto.retreiveCryptoPrices(axiosInstance.sendToGroovy);
+            crypto.retrieveCryptoPrices(axiosInstance.sendToGroovy);
             return true
         case '/getrate':
             const rate = await crypto.getAlertThreshold();
