@@ -97,9 +97,9 @@ const eventSource = new EventSource('/total');
 eventSource.onmessage = (event) => {
     const { total } = JSON.parse(event.data);
     const totalNode = document.querySelector('.total-balance-value')
-    if(totalNode) totalNode.textContent = `${total}€`
+    if (totalNode) totalNode.textContent = `${total}€`
 };
 
 eventSource.onerror = function (error) {
     console.error("EventSource error:", JSON.stringify(error));
-  };
+};

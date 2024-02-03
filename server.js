@@ -10,37 +10,21 @@ const {
 
 
 const app = express();
+
 app.use(express.json());
 app.use(express.static('front'));
 app.use(express.static('front/img'));
 app.set('view engine', 'ejs');
 
-app.post('/updatequantities', async function (req, res) {
-  const data = req.body
-  data.forEach(async (item) => {
-    await dbUpdateQuantity(item.name, item.value)
-  })
-  res.sendStatus(200)
-})
-
-app.post('/graphdata', async function (req, res) {
-  const data = req.body
-  const asset = data.asset
-  res.json({ asset });
-})
-
-app.post("*", async (req, res) => {
-  res.send(await handler(req));
-});
-
+/*************  WEB APP ***************/
 app.get('/home', async function (req, res) {
   const { total } = await retrieveDataFromDb()
   res.render(__dirname + '/front/views/index', { total });
 });
 
 app.get('/portfolio', async function (req, res) {
-    const { values, total } = await retrieveDataFromDb()
-    res.render(__dirname + '/front/views/portfolio', { values, total });
+  const { values, total } = await retrieveDataFromDb()
+  res.render(__dirname + '/front/views/portfolio', { values, total });
 });
 
 app.get('/quantities', async function (req, res) {
@@ -49,9 +33,8 @@ app.get('/quantities', async function (req, res) {
   res.render(__dirname + '/front/views/quantities', { data, total });
 });
 
-
+// SSE to update total balance on home page
 let clients = [];
-
 app.get('/total', (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
@@ -76,36 +59,55 @@ setInterval(async () => {
   }
 }, 15000);
 
+// Receive updated Quantities from front to update DB
+app.post('/updatequantities', async function (req, res) {
+  const data = req.body
+  data.forEach(async (item) => {
+    await dbUpdateQuantity(item.name, item.value)
+  })
+  res.sendStatus(200)
+})
+
+// Receive asset name from select tag and return it to update graph on home page
+app.post('/graphdata', async function (req, res) {
+  const data = req.body
+  const asset = data.asset
+  res.json({ asset });
+})
+
+/*************  TELEGRAM BOT ***************/
 app.get("*", async (req, res) => {
   res.send(await handler(req));
 });
 
+app.post("*", async (req, res) => {
+  res.send(await handler(req));
+});
 
 app.listen(PORT, '0.0.0.0', function (err) {
   if (err) console.log(err);
   console.log("Server listening on PORT", PORT);
 });
 
+
+/*******************************************/
+
 async function retrieveDataFromDb() {
   const values = []
   let total = 0
-  let liquidity = 0
   const [rate,] = await dbRequestExchangeRate()
-  const stockPrices = await dbRequestLastpriceAll()
-  const quantities = await dbRequestAllQuantities()
+  const [stockPrices, quantities] = await Promise.all([dbRequestLastpriceAll(), dbRequestAllQuantities()]);
   stockPrices.forEach((stockPrice) => {
-    let value = 0
-    quantities.forEach(quantity => {
-      if (stockPrice.name === quantity.name) {
-        value = Number(stockPrice.price) * Number(quantity.quantity) * Number(rate.value)
-        total += value
-        values.push({ name: stockPrice.name, value: value.toFixed(2) })
-      }
-      if(quantity.name === 'liquidity') {
-        liquidity = quantity.quantity
-      }
-    })
+    const quantity = quantities.find(q => q.name === stockPrice.name);
+    if (quantity) {
+      const { name, price } = stockPrice;
+      const { quantity: stockQuantity } = quantity;
+      const value = price * stockQuantity * rate.value;
+      values.push({ name, value: value.toFixed(2) });
+      total += value;
+    }
   })
-  total += liquidity
+  const { quantity } = quantities.find(q => q.name === 'liquidity');
+  total += quantity
   return { values, total: total.toFixed(2) }
 }
