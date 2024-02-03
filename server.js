@@ -49,6 +49,33 @@ app.get('/quantities', async function (req, res) {
   res.render(__dirname + '/front/views/quantities', { data, total });
 });
 
+
+let clients = [];
+
+app.get('/total', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+
+  clients.push(res);
+
+  req.on('close', () => {
+    clients = clients.filter(client => client !== res);
+  });
+});
+
+setInterval(async () => {
+  const { total } = await retrieveDataFromDb();
+  for (const client of clients) {
+    try {
+      client.write(`data: ${JSON.stringify({ total })}\n\n`);
+    } catch (error) {
+      console.error({ error });
+    }
+  }
+}, 15000);
+
 app.get("*", async (req, res) => {
   res.send(await handler(req));
 });

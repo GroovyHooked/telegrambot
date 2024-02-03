@@ -14,7 +14,7 @@ if (assetDropDownBtn) {
     })
 }
 
-updateGraphConttroller({ asset: initialAsset })
+if (assetDropDownBtn) updateGraphConttroller({ asset: initialAsset })
 
 function requestGraphDataFromServer(asset) {
     fetch('/graphdata', {
@@ -27,7 +27,7 @@ function requestGraphDataFromServer(asset) {
         .then(response => response.json())
         .then(data => {
             initialAsset = data.asset
-            updateGraphConttroller({ asset: initialAsset })
+            if (assetDropDownBtn) updateGraphConttroller({ asset: initialAsset })
 
         })
         .catch((error) => {
@@ -52,14 +52,14 @@ function updateGraphConttroller(asset) {
     }, 15000)
 }
 
-function retreiveQuantities() {
+function retrieveQuantitiesFromInputs() {
     const inputs = document.querySelectorAll('.input_node')
     const inputValues = Array.from(inputs).map(input => ({ name: input.name, value: input.value }));
     return inputValues;
 }
 
 function sendQuantityToServer() {
-    const quantities = retreiveQuantities()
+    const quantities = retrieveQuantitiesFromInputs()
     fetch("http://192.168.1.111/updatequantities", {
         method: "POST",
         headers: {
@@ -91,3 +91,15 @@ function toggleDropdown() {
     const dropdown = document.querySelector('.menu-dropdown')
     dropdown.classList.toggle('show')
 }
+
+const eventSource = new EventSource('/total');
+
+eventSource.onmessage = (event) => {
+    const { total } = JSON.parse(event.data);
+    const totalNode = document.querySelector('.total-balance-value')
+    if(totalNode) totalNode.textContent = `${total}€`
+};
+
+eventSource.onerror = function (error) {
+    console.error("EventSource error:", JSON.stringify(error));
+  };
