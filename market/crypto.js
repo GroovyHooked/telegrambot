@@ -23,7 +23,7 @@ const NB_OF_API_REQUESTS_PER_MINUTE = 4;
 
 generateChartForAllAssets()
 
-cron.schedule('0 * * * *', async () => {
+cron.schedule('0 */1 * * *', async () => {
     const rate = await exchangeInstance.getExchangeRateValue();
     await dbUpdateExchangeRate(rate);
 });
