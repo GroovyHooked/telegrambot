@@ -43,6 +43,7 @@ const availableCommandsCrypto = [
     '/setrate',
     '/getrateshitcoin',
     '/setrateshitcoin',
+    'http://192.168.1.111/home',
 ];
 
 const availableCommandsHelp = [
