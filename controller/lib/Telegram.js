@@ -6,9 +6,10 @@ const crypto = require("../../market/crypto.js");
 const variables = require("./variables.js");
 const { exchangeInstance } = require("../../market/fiat.js");
 const { dbRequestNbOfMessagesToKeep, dbSetNbOfMessagesToKeep } = require("../../database/database.js");
+
+const NB_OF_MESSAGES_SYSTEM = variables.systemMessages.length;
 let MODEL = "gpt-3.5-turbo";
 let NB_OF_MESSAGES_TO_KEEP
-const NB_OF_MESSAGES_SYSTEM = 18;
 
 async function processReceivedMessage(messageObj) {
     const content = messageObj?.text;
@@ -56,7 +57,7 @@ async function processCommands(content) {
             axiosInstance.sendToGroovy(`Voici les commandes disponibles pour le modèle: ${variables.availableCommandsGPT.map(command => `\n${command}`)}`);
             return true
         case '@Crypto':
-            axiosInstance.sendToGroovy(`Voici les commandes disponibles pour le Bitcoin: ${variables.availableCommandsCrypto.map(command => `\n${command}`)}`);
+            axiosInstance.sendToGroovy(`Voici les commandes disponibles pour la crypto: ${variables.availableCommandsCrypto.map(command => `\n${command}`)}`);
             return true
         case '@Currency':
             axiosInstance.sendToGroovy(`Voici les commandes disponibles pour les devises: ${variables.availableCommandsCurrency.map(command => `\n${command}`)}`);

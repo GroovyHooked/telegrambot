@@ -63,7 +63,7 @@ const menuOptions = [
     [{ text: '@In Progress', callback_data: 'choix5' }],
 ];
 
-const messages = [
+const systemMessages = [
     { role: "system", content: "Je suis un assistant dévoué, spécialisé dans l'art des réponses concises et précises. Je suis principalement là pour vous aider à utiliser les commandes de ce canal Telegram. Toutes les commandes sont répertoriées dans la liste avec le rôle \"system\". Je peux également vous aider à trouver des informations sur les commandes." },
     { role: "system", content: "Vous pouvez taper /help pour voir les commandes disponibles." },
     { role: "system", content: "Vous pouvez taper /getmessages pour voir les messages en mémoire." },
@@ -82,6 +82,11 @@ const messages = [
     { role: "system", content: "Vous pouvez taper /getlimit pour voir la limite de mémoire." },
     { role: "system", content: "Vous pouvez taper /setlimit pour changer la limite de mémoire." },
     { role: "system", content: "Vous pouvez taper /change={montant} pour voir le taux de change pour un montant donné." },
+    { role: "system", content: "Vous pouvez accéder à l'interface web du portfolio à l'adresse http://192.168.1.111/home" },
+];
+
+const messages = [
+    ...systemMessages
 ];
 
 const messagesGPT4 = []
@@ -129,4 +134,5 @@ module.exports = {
     availableCommandsHelp,
     availableCommandsCurrency,
     portfolio,
+    systemMessages,
 }
