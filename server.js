@@ -18,13 +18,13 @@ app.set('view engine', 'ejs');
 
 /*************  WEB APP ***************/
 app.get('/home', async function (req, res) {
-  const { total } = await retrieveDataFromDb()
-  res.render(__dirname + '/front/views/index', { total });
+  const { data, total } = await retrieveDataFromDb()
+  res.render(__dirname + '/front/views/index', { data, total });
 });
 
 app.get('/portfolio', async function (req, res) {
-  const { values, total } = await retrieveDataFromDb()
-  res.render(__dirname + '/front/views/portfolio', { values, total });
+  const { data, total } = await retrieveDataFromDb()
+  res.render(__dirname + '/front/views/portfolio', { data, total });
 });
 
 app.get('/quantities', async function (req, res) {
@@ -69,11 +69,11 @@ app.post('/updatequantities', async function (req, res) {
 })
 
 // Receive asset name from select tag and return it to update graph on home page
-app.post('/graphdata', async function (req, res) {
-  const data = req.body
-  const asset = data.asset
-  res.json({ asset });
-})
+// app.post('/graphdata', async function (req, res) {
+//   const data = req.body
+//   const asset = data.asset
+//   res.json({ asset });
+// })
 
 /*************  TELEGRAM BOT ***************/
 app.get("*", async (req, res) => {
@@ -93,7 +93,7 @@ app.listen(PORT, '0.0.0.0', function (err) {
 /*******************************************/
 
 async function retrieveDataFromDb() {
-  const values = []
+  const data = []
   let total = 0
   const [rate,] = await dbRequestExchangeRate()
   const [stockPrices, quantities] = await Promise.all([dbRequestLastpriceAll(), dbRequestAllQuantities()]);
@@ -103,11 +103,11 @@ async function retrieveDataFromDb() {
       const { name, price } = stockPrice;
       const { quantity: stockQuantity } = quantity;
       const value = price * stockQuantity * rate.value;
-      values.push({ name, value: value.toFixed(2) });
+      data.push({ name, value: value.toFixed(2) });
       total += value;
     }
   })
   const { quantity } = quantities.find(q => q.name === 'liquidity');
   total += quantity
-  return { values, total: total.toFixed(2) }
+  return { data, total: total.toFixed(2) }
 }

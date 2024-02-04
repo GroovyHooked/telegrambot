@@ -22,17 +22,21 @@ let alertThresholdShitcoin;
 const NB_OF_API_REQUESTS_PER_MINUTE = 4;
 
 generateChartForAllAssets()
+updateExchangeRate()
 
 cron.schedule('0 */1 * * *', async () => {
-    const rate = await exchangeInstance.getExchangeRateValue();
-    await dbUpdateExchangeRate(rate);
+    updateExchangeRate()
 });
 
 cron.schedule('*/15 * * * * *', async () => {
     const data = await fetchCryptoData()
-    populateCryptoDataAndHandleResult(data, axiosInstance.sendToGroovy)
+    populateDBAndHandleResult(data, axiosInstance.sendToGroovy)
 });
 
+async function updateExchangeRate() {
+    const rate = await exchangeInstance.getExchangeRateValue();
+    await dbUpdateExchangeRate(rate);
+}
 
 async function fetchCryptoData() {
     try {
@@ -48,18 +52,13 @@ async function fetchCryptoData() {
     }
 }
 
-function populateCryptoDataAndHandleResult(cryptoObjet, sendMessageCallback) {
-    if (!cryptoObjet) return sendMessageCallback('crypto.js/populateCryptoDataAndHandleResult: Aucune donnée récupérée depuis l\'API.')
-    insertCryptoData(cryptoObjet.data['bitcoin'], 'bitcoin')
-    insertCryptoData(cryptoObjet.data['ethereum'], 'ethereum')
-    insertCryptoData(cryptoObjet.data['cardano'], 'cardano')
-    insertCryptoData(cryptoObjet.data['vechain'], 'vechain')
-    insertCryptoData(cryptoObjet.data['The Graph'], 'The Graph')
-    insertCryptoData(cryptoObjet.data['Internet Computer'], 'Internet Computer')
-    insertCryptoData(cryptoObjet.data['solana'], 'solana')
-    insertCryptoData(cryptoObjet.data['apecoin'], 'apecoin')
-    insertCryptoData(cryptoObjet.data['NEAR Protocol'], 'NEAR Protocol')
-
+function populateDBAndHandleResult(cryptoObjet, sendMessageCallback) {
+    if (!cryptoObjet) { 
+        return sendMessageCallback('crypto.js/populateDBAndHandleResult: Aucune donnée récupérée depuis l\'API.')
+    }
+    portfolio.forEach(crypto => {
+        insertCryptoData(cryptoObjet.data[crypto], crypto)
+    })
     handleCryptoPrice(sendMessageCallback)
     generateChartForAllAssets()
 }
