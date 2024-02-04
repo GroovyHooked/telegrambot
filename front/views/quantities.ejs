@@ -1,8 +1,8 @@
 <%- include('generic/head') %>
 <body>
     <%- include('generic/header', { total }) %>
-    <div class="container">
-        <div class="container-top">
+    <div class="container mb-5">
+        <div class="container-top mb-5">
             <h1 class="container-title">Quantities</h1>
         </div>
         <% data.forEach(data => { %>
@@ -15,7 +15,9 @@
             </div>
         </div>
         <% }); %>
-        <button type="button" class="btn btn-outline-primary btn-sm">Update</button>
+        <div class="text-center mt-3">
+            <button type="button" class="btn btn-outline-primary btn-sm">Update Quantities</button>
+        </div>
         <div class="alert alert-success mt-3 text-center d-none" role="alert">
             Quantities successfully updated!
         </div>

@@ -22,20 +22,25 @@ body {
     justify-content: space-between;
 }
 
-.p-value {
+.balance-sub-container {
     display: flex;
     flex-direction: column;
     justify-content: center;
     gap: 10px;
 }
 
-.p-value > p {
+.balance-sub-container > p {
     margin-bottom: 0;
 }
 
-.p-value > p {
+.balance-sub-container > p {
     font-size: 20px;
 }
+
+.updated-value {
+    transition: background-color 0.1s ease;
+    background-color: white;
+  }
 
 .dropdown {
     align-self: center;
@@ -55,7 +60,7 @@ body {
     display: none;
 }
 
-.show {
+.display-dropdown {
     display: block;
     position: absolute;
     padding: 6px 0;

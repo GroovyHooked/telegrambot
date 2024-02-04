@@ -2,19 +2,13 @@
 
   <body>
     <%- include('generic/header', { total }) %>
-      <div class="container home-container">
+      <div class="container home-container mb-5">
         <div class="container-top">
-          <h1 class="container-title">Home</h1>
           <div class="asset-select-section">
             <select id="assets" name="assets">
-              <option value="bitcoin">Bitcoin</option>
-              <option value="ethereum">Ethereum</option>
-              <option value="solana">Solana</option>
-              <option value="vechain">Vechain</option>
-              <option value="Internet Computer">ICP</option>
-              <option value="NEAR">NEAR</option>
-              <option value="apecoin">Apecoin</option>
-              <option value="graph">Graph</option>
+              <% data.forEach(data => { %>
+                <option value="<%= data.name %>" <%= data.name === 'bitcoin' ? 'selected' : '' %>><%= data.name %></option>                
+              <% }); %>
             </select>
           </div>
         </div>
