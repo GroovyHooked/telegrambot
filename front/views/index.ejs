@@ -7,7 +7,7 @@
           <div class="asset-select-section">
             <select id="assets" name="assets">
               <% data.forEach(data => { %>
-                <option value="<%= data.name %>" <%= data.name === 'bitcoin' ? 'selected' : '' %>><%= data.name %></option>                
+                <option value="<%= data.name %>" <%= data.name === 'bitcoin' ? 'selected' : '' %>><%= data.name[0].toUpperCase() + data.name.slice(1) %></option>                
               <% }); %>
             </select>
           </div>
