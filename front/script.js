@@ -45,7 +45,7 @@ function updateGraphConttroller(asset) {
     }
     intervalId = setInterval(() => {
         updateGraphSrcOnHomePage(asset)
-    }, 15000)
+    }, 10000)
 }
 
 function retrieveQuantitiesFromInputs() {

@@ -57,7 +57,7 @@ setInterval(async () => {
       console.error({ error });
     }
   }
-}, 15000);
+}, 10000);
 
 // Receive updated Quantities from front to update DB
 app.post('/updatequantities', async function (req, res) {

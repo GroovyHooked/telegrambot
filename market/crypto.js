@@ -19,7 +19,7 @@ const { createChart } = require("../chart/chart.js");
 
 let alertThreshold;
 let alertThresholdShitcoin;
-const NB_OF_API_REQUESTS_PER_MINUTE = 4;
+const NB_OF_API_REQUESTS_PER_MINUTE = 6;
 
 generateChartForAllAssets()
 updateExchangeRate()
@@ -28,7 +28,7 @@ cron.schedule('0 */1 * * *', async () => {
     updateExchangeRate()
 });
 
-cron.schedule('*/15 * * * * *', async () => {
+cron.schedule('*/10 * * * * *', async () => {
     const data = await fetchCryptoData()
     populateDBAndHandleResult(data, axiosInstance.sendToGroovy)
 });
