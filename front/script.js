@@ -31,7 +31,7 @@ if (assetDropDownBtn) updateGraphConttroller({ asset: chartAsset })
 //     if (assetDropDownBtn) updateGraphConttroller({ asset: asset.asset })
 // }
 
-function updateGraphOnHomePage(assetName) {
+function updateGraphSrcOnHomePage(assetName) {
     const img = document.querySelector('.img-fluid')
     const timestamp = new Date().getTime();
     const imgSrc = `../img/${assetName.asset}.png?timestamp=${timestamp}`;
@@ -39,12 +39,12 @@ function updateGraphOnHomePage(assetName) {
 }
 
 function updateGraphConttroller(asset) {
-    updateGraphOnHomePage(asset)
+    updateGraphSrcOnHomePage(asset)
     if (intervalId) {
         clearInterval(intervalId);
     }
     intervalId = setInterval(() => {
-        updateGraphOnHomePage(asset)
+        updateGraphSrcOnHomePage(asset)
     }, 15000)
 }
 

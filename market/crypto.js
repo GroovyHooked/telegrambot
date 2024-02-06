@@ -3,7 +3,7 @@ const cron = require('node-cron');
 
 const { axiosInstance } = require("../controller/lib/axios.js");
 const {
-    insertCryptoData,
+    insertCryptoDataInDb,
     dbRequestLastprices,
     dbRequestExchangeRate,
     dbRequestQuantities,
@@ -57,7 +57,7 @@ function populateDBAndHandleResult(cryptoObjet, sendMessageCallback) {
         return sendMessageCallback('crypto.js/populateDBAndHandleResult: Aucune donnée récupérée depuis l\'API.')
     }
     portfolio.forEach(crypto => {
-        insertCryptoData(cryptoObjet.data[crypto], crypto)
+        insertCryptoDataInDb(cryptoObjet.data[crypto], crypto)
     })
     handleCryptoPrice(sendMessageCallback)
     generateChartForAllAssets()

@@ -10,7 +10,7 @@ const db = new sqlite3.Database('./database/database.db', (err) => {
     console.log('Connected to the database.');
 })
 
-function insertCryptoData(data, name) {
+function insertCryptoDataInDb(data, name) {
     const countRowsQuery = 'SELECT COUNT(*) as rowCount FROM crypto';
     
     db.get(countRowsQuery, [], (err, result) => {
@@ -29,8 +29,6 @@ function insertCryptoData(data, name) {
                     console.error(deleteErr.message);
                     return;
                 }
-
-                // console.log('Deleted last crypto data.');
                 performInsertion(data, name);
             });
         } else {
@@ -251,7 +249,7 @@ function dbRequestExchangeRate() {
 }
 
 module.exports = {
-    insertCryptoData,
+    insertCryptoDataInDb,
     dbRequestLastprices,
     dbRequestLastprice,
     dbRequestLastpriceAll,
