@@ -21,7 +21,7 @@ let alertThreshold;
 let alertThresholdShitcoin;
 const NB_OF_API_REQUESTS_PER_MINUTE = 6;
 
-generateChartForAllAssets()
+generateChartForAllAssets(60)
 updateExchangeRate()
 
 cron.schedule('0 */1 * * *', async () => {
@@ -29,7 +29,7 @@ cron.schedule('0 */1 * * *', async () => {
 });
 
 cron.schedule('*/10 * * * * *', async () => {
-    const data = await fetchCryptoData()
+    const data = await fetchData()
     populateDBAndHandleResult(data, axiosInstance.sendToGroovy)
 });
 
@@ -38,7 +38,7 @@ async function updateExchangeRate() {
     await dbUpdateExchangeRate(rate);
 }
 
-async function fetchCryptoData() {
+async function fetchData() {
     try {
         const data = await axiosInstance.fetchDataFromModulaApi()
         if (!data) {
@@ -59,11 +59,11 @@ function populateDBAndHandleResult(cryptoObjet, sendMessageCallback) {
     portfolio.forEach(crypto => {
         insertCryptoDataInDb(cryptoObjet.data[crypto], crypto)
     })
-    handleCryptoPrice(sendMessageCallback)
-    generateChartForAllAssets()
+    handleCryptoPrice(sendMessageCallback, 60)
+    generateChartForAllAssets(60)
 }
 
-async function handleCryptoPrice(sendMessageCallback) {
+async function handleCryptoPrice(sendMessageCallback, timeFrame) {
     const [data1,] = await dbRequestAlertThresholdDb()
     alertThreshold = Number(data1.value)
 
@@ -71,7 +71,7 @@ async function handleCryptoPrice(sendMessageCallback) {
     alertThresholdShitcoin = Number(data2.value)
 
     portfolio.forEach(async crypto => {
-        const data = await dbRequestLastprices(crypto, NB_OF_API_REQUESTS_PER_MINUTE * 10)
+        const data = await dbRequestLastprices(crypto, NB_OF_API_REQUESTS_PER_MINUTE * timeFrame)
         const prices = data.map(item => item.price);
         const percentChange = computePercentageVariation(prices).toFixed(2);
         if (crypto === 'bitcoin' && Math.abs(percentChange) >= alertThreshold || crypto === 'ethereum' && Math.abs(percentChange) >= alertThreshold) {
@@ -82,9 +82,9 @@ async function handleCryptoPrice(sendMessageCallback) {
     })
 }
 
-async function generateChartForAllAssets() {
+async function generateChartForAllAssets(minutes) {
     portfolio.forEach(async crypto => {
-        const data = await dbRequestLastprices(crypto, NB_OF_API_REQUESTS_PER_MINUTE * 60)
+        const data = await dbRequestLastprices(crypto, NB_OF_API_REQUESTS_PER_MINUTE * minutes)
         data.forEach(element => {
             const timestamp = new Date(element.timestamp);
             timestamp.setHours(timestamp.getHours() + 1);
@@ -97,13 +97,13 @@ async function generateChartForAllAssets() {
 const trendEmoji = (percentChange) => Math.sign(percentChange) === 0 ? '🇨🇭' : Math.sign(percentChange) === 1 ? '📈' : '📉';
 
 
-function sendAlertMessage(crypto, percentChange, prices, sendMessageCallback) {
+function sendAlertMessage(crypto, percentChange, prices, sendMessageCallback, timeFrame) {
     const highestCryptoPrice = Math.max(...prices);
     const lowestCryptoPrice = Math.min(...prices);
-    const trend = Math.sign(percentChange) === 0 ? 'Neutre' : Math.sign(percentChange) === 1 ? 'Augmentaion' : 'Baisse';
+    const trend = Math.sign(percentChange) === 1 ? 'Augmentaion' : 'Baisse';
     const tempMessage = [
-        `${trendEmoji(percentChange)} <strong>${trend ? trend : 'N/A'} du prix du ${crypto}.</strong>`,
-        `Au cours des 10 dernières minutes`,
+        `${trendEmoji(percentChange)} <strong>${trend} du prix du ${crypto}.</strong>`,
+        `Au cours des ${timeFrame} dernières minutes`,
         `Valeur la plus haute: ${highestCryptoPrice.toFixed(2)}$.`,
         `Valeur la plus basse: ${lowestCryptoPrice.toFixed(2)}$.`,
         `Diff: ${(highestCryptoPrice - lowestCryptoPrice).toFixed(2)}$.`,
